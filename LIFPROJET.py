@@ -2,15 +2,15 @@ import pybullet as p
 import time
 import pybullet_data
 
-def createBox(boxHalfLength, boxHalfWidth, boxHalfHeight):
-	boxID = p.createVisualShape(p.GEOM_BOX, halfExtents=[boxHalfLength, boxHalfWidth, boxHalfHeight])
-	colID = p.createCollisionShape(p.GEOM_BOX, halfExtents=[boxHalfLength, boxHalfWidth, boxHalfHeight])
+def createBox(halfExtents, position):
+	boxID = p.createVisualShape(p.GEOM_BOX, halfExtents=halfExtents)
+	colID = p.createCollisionShape(p.GEOM_BOX, halfExtents=halfExtents)
 
 	return p.createMultiBody(baseMass=1,
                       baseInertialFramePosition=[0, 0, 0],
                       baseCollisionShapeIndex=colID,
                       baseVisualShapeIndex=boxID,
-                      basePosition=[0, 0, 1],
+                      basePosition=position,
                       useMaximalCoordinates=True)
 	
 
@@ -24,7 +24,7 @@ planeId = p.loadURDF("plane.urdf")
 
 
 
-boxId = createBox(1,1,2)
+boxId = createBox([1,1,2], [0,0,1])
 
 
 
