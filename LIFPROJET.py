@@ -1,6 +1,7 @@
 import pybullet as p
 import time
 import pybullet_data
+import numpy as np
 
 def createBox(halfExtents, position):
 	boxID = p.createVisualShape(p.GEOM_BOX, halfExtents=halfExtents)
