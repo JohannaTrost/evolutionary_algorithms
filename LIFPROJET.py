@@ -1,40 +1,50 @@
 import pybullet as p
-import time
 import pybullet_data
-import numpy as np
+import time
+from urdfEditor import *
 
-def createBox(halfExtents, position):
-	boxID = p.createVisualShape(p.GEOM_BOX, halfExtents=halfExtents)
-	colID = p.createCollisionShape(p.GEOM_BOX, halfExtents=halfExtents)
-
-	return p.createMultiBody(baseMass=1,
-                      baseInertialFramePosition=[0, 0, 0],
-                      baseCollisionShapeIndex=colID,
-                      baseVisualShapeIndex=boxID,
-                      basePosition=position,
-                      useMaximalCoordinates=True)
-	
+##########################################
+gui = p.connect(p.GUI)
 
 
-
-physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-p.setGravity(0,0,-10)
-planeId = p.loadURDF("plane.urdf")
+p.setGravity(0,0,-9.81)
+
+p.createMultiBody(0, p.createCollisionShape(p.GEOM_PLANE), p.createVisualShape(p.GEOM_PLANE))
 
 
 
 
-boxId = createBox([1,1,2], [0,0,1])
+editor = UrdfEditor()
+
+l1 = UrdfLink("L1", 
+			  [UrdfVisual([0,0,1])], 
+			  [UrdfCollision([0,0,1])]
+			  )
+l2 = UrdfLink("L2", 
+			  [UrdfVisual([1,0,1])], 
+			  [UrdfCollision([1,0,1])]
+			  )
+
+j = UrdfJoint("L1", "L2", l2, "Joint")
+
+editor.addLink(l1)
+editor.addLink(l2)
+editor.urdfJoints.append(j)
+
+editor.createMultiBody(physicsClientId=gui)
+
+
+editor.saveUrdf("test.urdf")
 
 
 
 
 
-for i in range (10000):
-    p.stepSimulation()
-    time.sleep(1./240.)
 
-cubePos, cubeOrn = p.getBasePositionAndOrientation(boxId)
-print(cubePos,cubeOrn)
-p.disconnect()
+
+p.setRealTimeSimulation(1, physicsClientId=gui)
+
+while (p.getConnectionInfo(physicsClientId=gui)["isConnected"]):
+  p.stepSimulation(physicsClientId=gui)
+  time.sleep(0.01)
