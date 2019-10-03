@@ -105,4 +105,19 @@ for individual in population:
     basePosition = individual[2]
     distances.append(distance(endPos[0], basePosition[0], endPos[1], basePosition[1])) # distance(x1, x2, y1, y2)
 
+num_generations = 3
+generations = []
+generations.append(population)
+
+for idx in range(num_generations):
+
+    # sort population along with distances and extract first element of each pair of zipped list
+    indices_sorted = np.argsort(distances)
+
+    distances_sorted = []
+    for i ,individual in population:
+        individual = population[indices_sorted[i]]
+        distances_sorted.append(distances[indices_sorted[i]])
+        print('index : {}'.format(i))
+
 print('And the winner is individual {}'.format(np.argmax(distances))) # argmax is index of max value
