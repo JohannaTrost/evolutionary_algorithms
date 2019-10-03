@@ -1,40 +1,40 @@
 import pybullet as p
 import time
-import pybullet_data
-import numpy as np
+from urdfEditor import *
 
-def createBox(halfExtents, position):
-	boxID = p.createVisualShape(p.GEOM_BOX, halfExtents=halfExtents)
-	colID = p.createCollisionShape(p.GEOM_BOX, halfExtents=halfExtents)
+##########################################
+org2 = p.connect(p.DIRECT)
+org = p.connect(p.SHARED_MEMORY)
+if (org < 0):
+	org = p.connect(p.DIRECT)
 
-	return p.createMultiBody(baseMass=1,
-                      baseInertialFramePosition=[0, 0, 0],
-                      baseCollisionShapeIndex=colID,
-                      baseVisualShapeIndex=boxID,
-                      basePosition=position,
-                      useMaximalCoordinates=True)
-	
+gui = p.connect(p.GUI)
+
+p.resetSimulation(physicsClientId=org)
 
 
 
-physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
-p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-p.setGravity(0,0,-10)
-planeId = p.loadURDF("plane.urdf")
+editor = UrdfEditor()
 
+l1 = UrdfLink()
+l1.link_name="L1"
+l1.urdf_collision_shapes.append(UrdfCollision())
+l1.urdf_visual_shapes.append(UrdfVisual())
 
+editor.addLink(l1)
+editor.urdfJoints.append(j)
 
-
-boxId = createBox([1,1,2], [0,0,1])
-
+editor.createMultiBody(physicsClientId=gui)
 
 
 
 
-for i in range (10000):
-    p.stepSimulation()
-    time.sleep(1./240.)
 
-cubePos, cubeOrn = p.getBasePositionAndOrientation(boxId)
-print(cubePos,cubeOrn)
-p.disconnect()
+
+
+
+p.setRealTimeSimulation(1, physicsClientId=gui)
+
+while (p.getConnectionInfo(physicsClientId=gui)["isConnected"]):
+  p.stepSimulation(physicsClientId=gui)
+  time.sleep(0.01)
