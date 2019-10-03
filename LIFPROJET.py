@@ -1,25 +1,32 @@
 import pybullet as p
+import pybullet_data
 import time
 from urdfEditor import *
 
 ##########################################
-org2 = p.connect(p.DIRECT)
-org = p.connect(p.SHARED_MEMORY)
-if (org < 0):
-  org = p.connect(p.DIRECT)
-
 gui = p.connect(p.GUI)
 
-p.resetSimulation(physicsClientId=org)
+
+p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
+p.setGravity(0,0,-9.81)
+
+p.createMultiBody(0, p.createCollisionShape(p.GEOM_PLANE), p.createVisualShape(p.GEOM_PLANE))
+
 
 
 
 editor = UrdfEditor()
 
-l1 = UrdfLink("L1", [UrdfVisual()], [UrdfCollision()])
-l2 = UrdfLink("L2", [UrdfVisual()], [UrdfCollision()])
+l1 = UrdfLink("L1", 
+			  [UrdfVisual([0,0,1])], 
+			  [UrdfCollision([0,0,1])]
+			  )
+l2 = UrdfLink("L2", 
+			  [UrdfVisual([1,0,1])], 
+			  [UrdfCollision([1,0,1])]
+			  )
 
-j = UrdfJoint("L1", "L2", "Joint")
+j = UrdfJoint("L1", "L2", l2, "Joint")
 
 editor.addLink(l1)
 editor.addLink(l2)
@@ -28,7 +35,7 @@ editor.urdfJoints.append(j)
 editor.createMultiBody(physicsClientId=gui)
 
 
-
+editor.saveUrdf("test.urdf")
 
 
 

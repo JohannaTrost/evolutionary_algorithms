@@ -6,9 +6,9 @@ class UrdfInertial(object):
 
 	def __init__(self):
 		self.mass = 1
-		self.inertia_xxyyzz = [7, 8, 9]
-		self.origin_rpy = [1, 2, 3]
-		self.origin_xyz = [4, 5, 6]
+		self.inertia_xxyyzz = [0, 0, 0]
+		self.origin_rpy = [0, 0, 0]
+		self.origin_xyz = [0, 0, 0]
 
 
 class UrdfContact(object):
@@ -30,14 +30,14 @@ class UrdfLink(object):
 
 class UrdfVisual(object):
 
-	def __init__(self, name = "", origin_xyz = [0,0,0], origin_rpy = [0,1,0]):
+	def __init__(self, origin_xyz = [0,0,0], origin_rpy = [0,1,0], meshfilename = "meshfile"):
 		self.origin_rpy = origin_rpy
 		self.origin_xyz = origin_xyz
 		self.geom_type = p.GEOM_BOX
 		self.geom_radius = 1
 		self.geom_extents = [1,1,1]
 		self.geom_length = 10
-		self.geom_meshfilename = name
+		self.geom_meshfilename = meshfilename
 		self.geom_meshscale = [1, 1, 1]
 		self.material_rgba = [1, 0, 0, 1]
 		self.material_name = ""
@@ -45,21 +45,21 @@ class UrdfVisual(object):
 
 class UrdfCollision(object):
 
-	def __init__(self, origin_xyz = [0,0,0], origin_rpy = [0,1,0]):
+	def __init__(self, origin_xyz = [0,0,0], origin_rpy = [0,1,0], meshfilename = "meshfile"):
 		self.origin_rpy = origin_rpy
 		self.origin_xyz = origin_xyz
 		self.geom_type = p.GEOM_BOX
 		self.geom_radius = 1
 		self.geom_length = 2
-		self.geom_extents = [7, 8, 9]
-		self.geom_meshfilename = "meshfile"
+		self.geom_extents = [1, 1, 1]
+		self.geom_meshfilename = meshfilename
 		self.geom_meshscale = [1, 1, 1]
 
 
 class UrdfJoint(object):
 
-	def __init__(self, parent_name, child_name, joint_name = "joint_dummy", joint_origin_xyz = [0,0,0], joint_origin_rpy = [0,0,1], joint_axis_xyz = [0,0,1]):
-		self.link = UrdfLink()
+	def __init__(self, parent_name, child_name, link :UrdfLink, joint_name = "joint_dummy", joint_origin_xyz = [0,0,0], joint_origin_rpy = [0,0,1], joint_axis_xyz = [0,0,1]):
+		self.link = link
 		self.joint_name = joint_name
 		self.joint_type = p.JOINT_REVOLUTE
 		self.joint_lower_limit = 0
@@ -491,15 +491,15 @@ class UrdfEditor(object):
 		baseVisualShapeIndex = -1
 
 		if (len(shapeTypes)):
-			#print("len(shapeTypes)=",len(shapeTypes))
-			#print("len(halfExtents)=",len(halfExtents))
-			#print("len(radii)=",len(radii))
-			#print("len(lengths)=",len(lengths))
-			#print("len(fileNames)=",len(fileNames))
-			#print("len(meshScales)=",len(meshScales))
-			#print("len(rgbaColors)=",len(rgbaColors))
-			#print("len(visualFramePositions)=",len(visualFramePositions))
-			#print("len(visualFrameOrientations)=",len(visualFrameOrientations))
+			print("len(shapeTypes)=",len(shapeTypes))
+			print("len(halfExtents)=",len(halfExtents))
+			print("len(radii)=",len(radii))
+			print("len(lengths)=",len(lengths))
+			print("len(fileNames)=",len(fileNames))
+			print("len(meshScales)=",len(meshScales))
+			print("len(rgbaColors)=",len(rgbaColors))
+			print("len(visualFramePositions)=",len(visualFramePositions))
+			print("len(visualFrameOrientations)=",len(visualFrameOrientations))
 
 			baseVisualShapeIndex = p.createVisualShapeArray(shapeTypes=shapeTypes,
 					halfExtents=halfExtents,
