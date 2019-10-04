@@ -1,6 +1,8 @@
 import pybullet as p
 import time
 
+from typing import List
+
 
 class UrdfInertial(object):
 
@@ -30,7 +32,7 @@ class UrdfLink(object):
 
 class UrdfVisual(object):
 
-	def __init__(self, origin_xyz = [0,0,0], origin_rpy = [0,1,0], meshfilename = "meshfile"):
+	def __init__(self, origin_xyz = [0,0,0], origin_rpy = [0,0,0], meshfilename = "meshfile"):
 		self.origin_rpy = origin_rpy
 		self.origin_xyz = origin_xyz
 		self.geom_type = p.GEOM_BOX
@@ -45,7 +47,7 @@ class UrdfVisual(object):
 
 class UrdfCollision(object):
 
-	def __init__(self, origin_xyz = [0,0,0], origin_rpy = [0,1,0], meshfilename = "meshfile"):
+	def __init__(self, origin_xyz = [0,0,0], origin_rpy = [0,0,0], meshfilename = "meshfile"):
 		self.origin_rpy = origin_rpy
 		self.origin_xyz = origin_xyz
 		self.geom_type = p.GEOM_BOX
@@ -58,15 +60,14 @@ class UrdfCollision(object):
 
 class UrdfJoint(object):
 
-	def __init__(self, parent_name, child_name, link :UrdfLink, joint_name = "joint_dummy", joint_origin_xyz = [0,0,0], joint_origin_rpy = [0,0,1], joint_axis_xyz = [0,0,1]):
-		self.link = link
+	def __init__(self, parent_name, child_name, joint_name = "joint_dummy", joint_origin_xyz = [0,0,0], joint_origin_rpy = [0,0,0], joint_axis_xyz = [0,0,1]):
 		self.joint_name = joint_name
 		self.joint_type = p.JOINT_REVOLUTE
 		self.joint_lower_limit = 0
 		self.joint_upper_limit = -1
 		self.parent_name = parent_name
 		self.child_name = child_name
-		self.joint_origin_xyz = joint_axis_xyz
+		self.joint_origin_xyz = joint_origin_xyz
 		self.joint_origin_rpy = joint_origin_rpy
 		self.joint_axis_xyz = joint_axis_xyz
 
@@ -75,12 +76,18 @@ class UrdfEditor(object):
 
 	def __init__(self):
 		self.initialize()
+	def __del__(self):
+		pass
+
+
+
 
 	def initialize(self):
 		self.urdfLinks = []
 		self.urdfJoints = []
 		self.robotName = ""
 		self.linkNameToIndex = {}
+		self.jointNameToIndex = {}
 		self.jointTypeToName = {p.JOINT_FIXED: "JOINT_FIXED" ,\
 							 p.JOINT_REVOLUTE: "JOINT_REVOLUTE",\
 							 p.JOINT_PRISMATIC: "JOINT_PRISMATIC" }
@@ -346,7 +353,7 @@ class UrdfEditor(object):
 
 	def saveUrdf(self, fileName, saveVisuals=True):
 		file = open(fileName, "w")
-		file.write("<?xml version=\"0.0\" ?>\n")
+		file.write("<?xml version=\"1.0\" ?>\n")
 		file.write("<robot name=\"")
 		file.write(self.robotName)
 		file.write("\">\n")
@@ -438,79 +445,13 @@ class UrdfEditor(object):
 
 		#for i in range (len(self.urdfLinks)):
 		#	print("link", i, "=",self.urdfLinks[i].link_name)
-
+		
 		base = self.urdfLinks[0]
 
 		#v.tmp_collision_shape_ids=[]
 		baseMass = base.urdf_inertial.mass
-		baseCollisionShapeIndex = -1
-		baseShapeTypeArray = []
-		baseRadiusArray = []
-		baseHalfExtentsArray = []
-		lengthsArray = []
-		fileNameArray = []
-		meshScaleArray = []
-		basePositionsArray = []
-		baseOrientationsArray = []
+		baseShapes = createShapes(base);
 
-		for v in base.urdf_collision_shapes:
-			shapeType = v.geom_type
-			baseShapeTypeArray.append(shapeType)
-			baseHalfExtentsArray.append([0.5 * v.geom_extents[0], 0.5 * v.geom_extents[1], 0.5 * v.geom_extents[2]])
-			baseRadiusArray.append(v.geom_radius)
-			lengthsArray.append(v.geom_length)
-			fileNameArray.append(v.geom_meshfilename)
-			meshScaleArray.append(v.geom_meshscale)
-			basePositionsArray.append(v.origin_xyz)
-			orn = p.getQuaternionFromEuler(v.origin_rpy)
-			baseOrientationsArray.append(orn)
-
-		if (len(baseShapeTypeArray)):
-			#print("fileNameArray=",fileNameArray)
-			baseCollisionShapeIndex = p.createCollisionShapeArray(shapeTypes=baseShapeTypeArray,
-					radii=baseRadiusArray,
-					halfExtents=baseHalfExtentsArray,
-					lengths=lengthsArray,
-					fileNames=fileNameArray,
-					meshScales=meshScaleArray,
-					collisionFramePositions=basePositionsArray,
-					collisionFrameOrientations=baseOrientationsArray,
-					physicsClientId=physicsClientId)
-
-		urdfVisuals = base.urdf_visual_shapes
-
-		shapeTypes = [v.geom_type for v in urdfVisuals]
-		halfExtents = [[ext * 0.5 for ext in v.geom_extents] for v in urdfVisuals]
-		radii = [v.geom_radius for v in urdfVisuals]
-		lengths = [v.geom_length for v in urdfVisuals]
-		fileNames = [v.geom_meshfilename for v in urdfVisuals]
-		meshScales = [v.geom_meshscale for v in urdfVisuals]
-		rgbaColors = [v.material_rgba for v in urdfVisuals]
-		visualFramePositions = [v.origin_xyz for v in urdfVisuals]
-		visualFrameOrientations = [p.getQuaternionFromEuler(v.origin_rpy) for v in urdfVisuals]
-		baseVisualShapeIndex = -1
-
-		if (len(shapeTypes)):
-			print("len(shapeTypes)=",len(shapeTypes))
-			print("len(halfExtents)=",len(halfExtents))
-			print("len(radii)=",len(radii))
-			print("len(lengths)=",len(lengths))
-			print("len(fileNames)=",len(fileNames))
-			print("len(meshScales)=",len(meshScales))
-			print("len(rgbaColors)=",len(rgbaColors))
-			print("len(visualFramePositions)=",len(visualFramePositions))
-			print("len(visualFrameOrientations)=",len(visualFrameOrientations))
-
-			baseVisualShapeIndex = p.createVisualShapeArray(shapeTypes=shapeTypes,
-					halfExtents=halfExtents,
-					radii=radii,
-					lengths=lengths,
-					fileNames=fileNames,
-					meshScales=meshScales,
-					rgbaColors=rgbaColors,
-					visualFramePositions=visualFramePositions,
-					visualFrameOrientations=visualFrameOrientations,
-					physicsClientId=physicsClientId)
 
 		linkMasses = []
 		linkCollisionShapeIndices = []
@@ -525,77 +466,17 @@ class UrdfEditor(object):
 		linkJointAxis = []
 
 		for joint in self.urdfJoints:
-			link = joint.link
-			linkMass = link.urdf_inertial.mass
-			linkCollisionShapeIndex = -1
-			linkVisualShapeIndex = -1
-			linkPosition = [0, 0, 0]
-			linkOrientation = [0, 0, 0]
-			linkInertialFramePosition = [0, 0, 0]
-			linkInertialFrameOrientation = [0, 0, 0]
 			linkParentIndex = self.linkNameToIndex[joint.parent_name]
+			link = self.urdfLinks[self.linkNameToIndex[joint.child_name]]
+
 			linkJointType = joint.joint_type
 			linkJointAx = joint.joint_axis_xyz
-			linkShapeTypeArray = []
-			linkRadiusArray = []
-			linkHalfExtentsArray = []
-			lengthsArray = []
-			fileNameArray = []
-			linkMeshScaleArray = []
-			linkPositionsArray = []
-			linkOrientationsArray = []
 
-			for v in link.urdf_collision_shapes:
-				shapeType = v.geom_type
-				linkShapeTypeArray.append(shapeType)
-				linkHalfExtentsArray.append([0.5 * v.geom_extents[0], 0.5 * v.geom_extents[1], 0.5 * v.geom_extents[2]])
-				linkRadiusArray.append(v.geom_radius)
-				lengthsArray.append(v.geom_length)
-				fileNameArray.append(v.geom_meshfilename)
-				linkMeshScaleArray.append(v.geom_meshscale)
-				linkPositionsArray.append(v.origin_xyz)
-				linkOrientationsArray.append(p.getQuaternionFromEuler(v.origin_rpy))
+			shapeIndices = createShapes(link)
 
-			if (len(linkShapeTypeArray)):
-				linkCollisionShapeIndex = p.createCollisionShapeArray(shapeTypes=linkShapeTypeArray,
-						radii=linkRadiusArray,
-						halfExtents=linkHalfExtentsArray,
-						lengths=lengthsArray,
-						fileNames=fileNameArray,
-						meshScales=linkMeshScaleArray,
-						collisionFramePositions=linkPositionsArray,
-						collisionFrameOrientations=linkOrientationsArray,
-						physicsClientId=physicsClientId)
-
-			urdfVisuals = link.urdf_visual_shapes
-			linkVisualShapeIndex = -1
-			shapeTypes = [v.geom_type for v in urdfVisuals]
-			halfExtents = [[ext * 0.5 for ext in v.geom_extents] for v in urdfVisuals]
-			radii = [v.geom_radius for v in urdfVisuals]
-			lengths = [v.geom_length for v in urdfVisuals]
-			fileNames = [v.geom_meshfilename for v in urdfVisuals]
-			meshScales = [v.geom_meshscale for v in urdfVisuals]
-			rgbaColors = [v.material_rgba for v in urdfVisuals]
-			visualFramePositions = [v.origin_xyz for v in urdfVisuals]
-			visualFrameOrientations = [p.getQuaternionFromEuler(v.origin_rpy) for v in urdfVisuals]
-
-			if (len(shapeTypes)):
-				print("fileNames=", fileNames)
-
-				linkVisualShapeIndex = p.createVisualShapeArray(shapeTypes=shapeTypes,
-						halfExtents=halfExtents,
-						radii=radii,
-						lengths=lengths,
-						fileNames=fileNames,
-						meshScales=meshScales,
-						rgbaColors=rgbaColors,
-						visualFramePositions=visualFramePositions,
-						visualFrameOrientations=visualFrameOrientations,
-						physicsClientId=physicsClientId)
-
-			linkMasses.append(linkMass)
-			linkCollisionShapeIndices.append(linkCollisionShapeIndex)
-			linkVisualShapeIndices.append(linkVisualShapeIndex)
+			linkMasses.append(link.urdf_inertial.mass)
+			linkCollisionShapeIndices.append(shapeIndices[0])
+			linkVisualShapeIndices.append(shapeIndices[1])
 			linkPositions.append(joint.joint_origin_xyz)
 			linkOrientations.append(p.getQuaternionFromEuler(joint.joint_origin_rpy))
 			linkInertialFramePositions.append(link.urdf_inertial.origin_xyz)
@@ -606,12 +487,13 @@ class UrdfEditor(object):
 			
 			
 		obUid = p.createMultiBody(baseMass,\
-			baseCollisionShapeIndex=baseCollisionShapeIndex,
-			baseVisualShapeIndex=baseVisualShapeIndex,
+			baseCollisionShapeIndex=baseShapes[0],
+			baseVisualShapeIndex=baseShapes[1],
 			basePosition=basePosition,
 			baseOrientation=baseOrientation,
 			baseInertialFramePosition=base.urdf_inertial.origin_xyz,
 			baseInertialFrameOrientation=p.getQuaternionFromEuler(base.urdf_inertial.origin_rpy),
+			
 			linkMasses=linkMasses,
 			linkCollisionShapeIndices=linkCollisionShapeIndices,
 			linkVisualShapeIndices=linkVisualShapeIndices,
@@ -622,12 +504,85 @@ class UrdfEditor(object):
 			linkParentIndices=linkParentIndices,
 			linkJointTypes=linkJointTypes,
 			linkJointAxis=linkJointAxis,
+			#flags = p.URDF_USE_SELF_COLLISION,
 			physicsClientId=physicsClientId)
 		return obUid
 
 	def addLink(self, link: UrdfLink):
 		self.linkNameToIndex[link.link_name] = len(self.urdfLinks)
 		self.urdfLinks.append(link)
+	def addJoint(self, joint: UrdfJoint):
+		self.jointNameToIndex[joint.joint_name] = len(self.urdfJoints)
+		self.urdfJoints.append(joint)
 
-	def __del__(self):
-		pass
+
+
+
+
+def createCollisionShape(collision_shapes: List[UrdfCollision], physicsClientId = 0):
+		
+	CollisionShapeIndex = -1
+	ShapeTypeArray = [v.geom_type for v in collision_shapes]
+	RadiusArray = [v.geom_radius for v in collision_shapes]
+	HalfExtentsArray = [[ext * 0.5 for ext in v.geom_extents] for v in collision_shapes]
+	lengthsArray = [v.geom_length for v in collision_shapes]
+	fileNameArray = [v.geom_meshfilename for v in collision_shapes]
+	meshScaleArray = [v.geom_meshscale for v in collision_shapes]
+	PositionsArray = [v.origin_xyz for v in collision_shapes]
+	OrientationsArray = [p.getQuaternionFromEuler(v.origin_rpy) for v in collision_shapes]
+
+	if (len(ShapeTypeArray)):
+		#print("fileNameArray=",fileNameArray)
+		CollisionShapeIndex = p.createCollisionShapeArray(shapeTypes=ShapeTypeArray,
+				radii=RadiusArray,
+				halfExtents=HalfExtentsArray,
+				lengths=lengthsArray,
+				fileNames=fileNameArray,
+				meshScales=meshScaleArray,
+				collisionFramePositions=PositionsArray,
+				collisionFrameOrientations=OrientationsArray,
+				physicsClientId=physicsClientId)
+
+	return CollisionShapeIndex
+
+def createVisualShape(visual_shapes: List[UrdfVisual], physicsClientId=0):
+
+	VisualShapeIndex = -1
+	shapeTypes = [v.geom_type for v in visual_shapes]
+	halfExtents = [[ext * 0.5 for ext in v.geom_extents] for v in visual_shapes]
+	radii = [v.geom_radius for v in visual_shapes]
+	lengths = [v.geom_length for v in visual_shapes]
+	fileNames = [v.geom_meshfilename for v in visual_shapes]
+	meshScales = [v.geom_meshscale for v in visual_shapes]
+	rgbaColors = [v.material_rgba for v in visual_shapes]
+	visualFramePositions = [v.origin_xyz for v in visual_shapes]
+	visualFrameOrientations = [p.getQuaternionFromEuler(v.origin_rpy) for v in visual_shapes]
+		
+
+	if (len(shapeTypes)):
+		#print("len(shapeTypes)=",len(shapeTypes))
+		#print("len(halfExtents)=",len(halfExtents))
+		#print("len(radii)=",len(radii))
+		#print("len(lengths)=",len(lengths))
+		#print("len(fileNames)=",len(fileNames))
+		#print("len(meshScales)=",len(meshScales))
+		#print("len(rgbaColors)=",len(rgbaColors))
+		#print("len(visualFramePositions)=",len(visualFramePositions))
+		#print("len(visualFrameOrientations)=",len(visualFrameOrientations))
+
+		VisualShapeIndex = p.createVisualShapeArray(shapeTypes=shapeTypes,
+				halfExtents=halfExtents,
+				radii=radii,
+				lengths=lengths,
+				fileNames=fileNames,
+				meshScales=meshScales,
+				rgbaColors=rgbaColors,
+				visualFramePositions=visualFramePositions,
+				visualFrameOrientations=visualFrameOrientations,
+				physicsClientId=physicsClientId)
+
+	return VisualShapeIndex
+
+def createShapes(link : UrdfLink, physicsClientId=0):
+	return [createCollisionShape(link.urdf_visual_shapes, physicsClientId), 
+		createVisualShape(link.urdf_visual_shapes, physicsClientId)]

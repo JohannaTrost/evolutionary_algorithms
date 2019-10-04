@@ -1,7 +1,8 @@
 import pybullet as p
 import pybullet_data
 import time
-from urdfEditor import *
+import math
+from Shapes import *
 
 ##########################################
 gui = p.connect(p.GUI)
@@ -17,23 +18,24 @@ p.createMultiBody(0, p.createCollisionShape(p.GEOM_PLANE), p.createVisualShape(p
 
 editor = UrdfEditor()
 
-l1 = UrdfLink("L1", 
-			  [UrdfVisual([0,0,1])], 
-			  [UrdfCollision([0,0,1])]
-			  )
-l2 = UrdfLink("L2", 
-			  [UrdfVisual([1,0,1])], 
-			  [UrdfCollision([1,0,1])]
-			  )
+b1 = Box("B1")
+b2 = Box("B2")
+s1 = Sphere("S1", [0,0,0], [0,0,0], 0.75)
 
-j = UrdfJoint("L1", "L2", l2, "Joint")
 
-editor.addLink(l1)
-editor.addLink(l2)
-editor.urdfJoints.append(j)
+j1 = UrdfJoint("B1", "S1", "B1S1", [0,0,0.5], [0,0,0], [1,0,0])
+j2 = UrdfJoint("S1", "B2", "S1B2", [0,0,0.5], [0,0,0], [0,1,0])
 
-editor.createMultiBody(physicsClientId=gui)
+editor.addLink(b1)
+editor.addLink(s1)
+editor.addLink(b2)
 
+editor.addJoint(j1)
+editor.addJoint(j2)
+
+id = editor.createMultiBody(physicsClientId=gui)
+
+p.createConstraint(id, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 1]) #Anchors the creature to the ground.
 
 editor.saveUrdf("test.urdf")
 
