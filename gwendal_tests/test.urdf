@@ -1,0 +1,54 @@
+<?xml version="0.0" ?>
+<robot name="">
+	<link name="L1">
+		<inertial>
+			<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
+			<mass value="1.00000"/>
+			<inertia ixx="0.00000" ixy="0" ixz="0" iyy="0.00000" iyz="0" izz="0.00000"/>
+		</inertial>
+		<visual>
+			<origin rpy="0.00000 1.00000 0.00000" xyz="0.00000 0.00000 1.00000"/>
+			<geometry>
+				<box size="1.00000 1.00000 1.00000"/>
+			</geometry>
+			<material name="">
+				<color rgba="1.00000 0.00000 0.00000 1.00000" />
+			</material>
+		</visual>
+		<collision>
+			<origin rpy="0.00000 1.00000 0.00000" xyz="0.00000 0.00000 1.00000"/>
+			<geometry>
+				<box size="1.00000 1.00000 1.00000"/>
+			</geometry>
+		</collision>
+	</link>
+	<link name="L2">
+		<inertial>
+			<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
+			<mass value="1.00000"/>
+			<inertia ixx="0.00000" ixy="0" ixz="0" iyy="0.00000" iyz="0" izz="0.00000"/>
+		</inertial>
+		<visual>
+			<origin rpy="0.00000 1.00000 0.00000" xyz="1.00000 0.00000 1.00000"/>
+			<geometry>
+				<box size="1.00000 1.00000 1.00000"/>
+			</geometry>
+			<material name="">
+				<color rgba="1.00000 0.00000 0.00000 1.00000" />
+			</material>
+		</visual>
+		<collision>
+			<origin rpy="0.00000 1.00000 0.00000" xyz="1.00000 0.00000 1.00000"/>
+			<geometry>
+				<box size="1.00000 1.00000 1.00000"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="Joint" type="continuous">
+		<parent link="L1"/>
+		<child link="L2"/>
+		<dynamics damping="1.0" friction="0.0001"/>
+		<origin rpy="0.00000 0.00000 1.00000" xyz="0.00000 0.00000 1.00000"/>
+		<axis xyz="0.00000 0.00000 1.00000"/>
+	</joint>
+</robot>
