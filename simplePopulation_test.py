@@ -1,13 +1,16 @@
 import pybullet as p
 import time
 import numpy as np
+import math
+
 
 def distance(x1, x2, y1, y2):
     return ((x2 - x1)**2 + (y2 - y1)**2)**0.5
 
-def createIndividuum(num_objects=3):
 
-    #select size and power for each obj randomly
+def create_individual(num_objects=3):
+
+    # select size and power for each obj randomly
     gene_sizes = []
     gene_forces = []
     for obj in range(num_objects):
@@ -83,6 +86,36 @@ def disable_collision(population):
                 for other_joint in range(-1, p.getNumJoints(other_individual[0])): # ... all other joints
                     p.setCollisionFilterPair(individual[0], other_individual[0], joint, other_joint, enableCollision=0)
 
+
+# sort population along with distances
+def tri(pop, dist):
+    # list of indices of sorted distances
+    indices_sorted = np.argsort(dist)[::-1][:len(dist)]
+    dist_sorted = []
+    pop_sorted = []
+    for i in range(len(pop)):
+        pop_sorted = pop[indices_sorted[i]]
+        dist_sorted.append(dist[indices_sorted[i]])
+
+    return pop_sorted, dist_sorted
+
+
+def selection(pop, dist):
+    survivors = []
+    # want to keep 50% of the pop
+    num_survivors = 0.5 * (len(pop))
+    num_survivors = int(round(num_survivors))
+
+    for i in range(num_survivors):
+
+        coeff = 1.1
+        k = coeff ** (num_survivors + 1) - 1
+        select = num_survivors - (num_survivors / np.log(k + 1)) * np.log(k * np.random.rand() + 1)
+        select = int(round(select))
+        survivors.append(population[select])
+
+    return survivors
+
 sim_time = 10 #s
 dt = 1. / 240.
 p.connect(p.GUI)
@@ -90,7 +123,7 @@ p.createCollisionShape(p.GEOM_PLANE)
 p.createMultiBody(0, 0)
 p.setGravity(0, 0, -9.81)
 
-population = [createIndividuum() for i in range(10)]
+population = [create_individual() for i in range(10)]
 
 disable_collision(population)
 
@@ -109,15 +142,8 @@ num_generations = 3
 generations = []
 generations.append(population)
 
-for idx in range(num_generations):
-
-    # sort population along with distances and extract first element of each pair of zipped list
-    indices_sorted = np.argsort(distances)
-
-    distances_sorted = []
-    for i ,individual in population:
-        individual = population[indices_sorted[i]]
-        distances_sorted.append(distances[indices_sorted[i]])
-        print('index : {}'.format(i))
+population, distances = tri(population, distances)
+pop_selected = []
+pop_selected = selection(population, distances)
 
 print('And the winner is individual {}'.format(np.argmax(distances))) # argmax is index of max value
