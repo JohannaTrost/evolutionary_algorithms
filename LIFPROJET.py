@@ -20,30 +20,20 @@ editor = UrdfEditor()
 
 b1 = Box("B1")
 b2 = Box("B2")
-s1 = Sphere("S1", [0,0,0], [0,0,0], 0.75)
 
+j1 = UrdfJoint("B1", "B2", "J1", [0,0,1.5], [0,0,0], [1,0,0], p.JOINT_SPHERICAL)
 
-j1 = UrdfJoint("B1", "S1", "B1S1", [0,0,0.5], [0,0,0], [1,0,0])
-j2 = UrdfJoint("S1", "B2", "S1B2", [0,0,0.5], [0,0,0], [0,1,0])
 
 editor.addLink(b1)
-editor.addLink(s1)
 editor.addLink(b2)
 
 editor.addJoint(j1)
-editor.addJoint(j2)
 
-id = editor.createMultiBody(physicsClientId=gui)
-
-p.createConstraint(id, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 1]) #Anchors the creature to the ground.
+#id = editor.createMultiBody(physicsClientId=gui)
+#p.createConstraint(id, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 1]) #Anchors the creature to the ground.
 
 editor.saveUrdf("test.urdf")
-
-
-
-
-
-
+p.loadURDF("test.urdf")
 
 p.setRealTimeSimulation(1, physicsClientId=gui)
 

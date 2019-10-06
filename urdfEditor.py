@@ -3,6 +3,10 @@ import time
 
 from typing import List
 
+def genVec(vec : List[float], precision = 5):
+    return " ".join(map(lambda f:f'{f:.{precision}f}', vec))  # map(), just for kicks
+
+
 
 class UrdfInertial(object):
 
@@ -60,9 +64,9 @@ class UrdfCollision(object):
 
 class UrdfJoint(object):
 
-	def __init__(self, parent_name, child_name, joint_name = "joint_dummy", joint_origin_xyz = [0,0,0], joint_origin_rpy = [0,0,0], joint_axis_xyz = [0,0,1]):
+	def __init__(self, parent_name, child_name, joint_name = "joint_dummy", joint_origin_xyz = [0,0,0], joint_origin_rpy = [0,0,0], joint_axis_xyz = [0,0,1], joint_type = p.JOINT_REVOLUTE):
 		self.joint_name = joint_name
-		self.joint_type = p.JOINT_REVOLUTE
+		self.joint_type = joint_type
 		self.joint_lower_limit = 0
 		self.joint_upper_limit = -1
 		self.parent_name = parent_name
@@ -88,9 +92,6 @@ class UrdfEditor(object):
 		self.robotName = ""
 		self.linkNameToIndex = {}
 		self.jointNameToIndex = {}
-		self.jointTypeToName = {p.JOINT_FIXED: "JOINT_FIXED" ,\
-							 p.JOINT_REVOLUTE: "JOINT_REVOLUTE",\
-							 p.JOINT_PRISMATIC: "JOINT_PRISMATIC" }
 
 	def convertLinkFromMultiBody(self, bodyUid, linkIndex, urdfLink, physicsClientId):
 		dyn = p.getDynamicsInfo(bodyUid, linkIndex, physicsClientId=physicsClientId)
@@ -207,164 +208,138 @@ class UrdfEditor(object):
 
 			self.urdfJoints.append(urdfJoint)
 
-	def writeInertial(self, file, urdfInertial, precision=5):
-		file.write("\t\t<inertial>\n")
-		str = '\t\t\t<origin rpy=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\" xyz=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\"/>\n'.format(\
-		urdfInertial.origin_rpy[0],urdfInertial.origin_rpy[1],urdfInertial.origin_rpy[2],\
-		urdfInertial.origin_xyz[0],urdfInertial.origin_xyz[1],urdfInertial.origin_xyz[2], prec=precision)
-		file.write(str)
-		str = '\t\t\t<mass value=\"{:.{prec}f}\"/>\n'.format(urdfInertial.mass, prec=precision)
-		file.write(str)
-		str = '\t\t\t<inertia ixx=\"{:.{prec}f}\" ixy=\"0\" ixz=\"0\" iyy=\"{:.{prec}f}\" iyz=\"0\" izz=\"{:.{prec}f}\"/>\n'.format(\
-		urdfInertial.inertia_xxyyzz[0],\
-		urdfInertial.inertia_xxyyzz[1],\
-		urdfInertial.inertia_xxyyzz[2],prec=precision)
-		file.write(str)
-		file.write("\t\t</inertial>\n")
+	def writeInertial(self, urdfInertial, precision=5):
+		str = f'		<inertial>\n'
+		str += f'			<origin rpy="{genVec(urdfInertial.origin_rpy, precision)}" xyz="{genVec(urdfInertial.origin_xyz, precision)}"/>\n'
+		str += f'			<mass value="{round(urdfInertial.mass, precision)}"/>\n'
+		str += f'			<inertia ixx="{round(urdfInertial.inertia_xxyyzz[0], precision)}" ixy="0" ixz="0" iyy="{round(urdfInertial.inertia_xxyyzz[1], precision)}" iyz="0" izz="{round(urdfInertial.inertia_xxyyzz[2], precision)}"/>\n'
+		str += f'		</inertial>\n'
 
-	def writeVisualShape(self, file, urdfVisual, precision=5):
+		return str
+
+	def writeVisualShape(self, urdfVisual, precision=5):
 		#we don't support loading capsule types from visuals, so auto-convert from
 		#collision shape
 		if urdfVisual.geom_type == p.GEOM_CAPSULE:
 			return
 
-		file.write("\t\t<visual>\n")
-		str = '\t\t\t<origin rpy="{:.{prec}f} {:.{prec}f} {:.{prec}f}" xyz="{:.{prec}f} {:.{prec}f} {:.{prec}f}"/>\n'.format(\
-		 urdfVisual.origin_rpy[0],urdfVisual.origin_rpy[1],urdfVisual.origin_rpy[2],
-		 urdfVisual.origin_xyz[0],urdfVisual.origin_xyz[1],urdfVisual.origin_xyz[2], prec=precision)
-		file.write(str)
-		file.write("\t\t\t<geometry>\n")
+		str = f'		<visual>\n'
+		str += f'			<origin rpy="{genVec(urdfVisual.origin_rpy, precision)}" xyz="{genVec(urdfVisual.origin_xyz, precision)}"/>\n'
+
+		str += f'			<geometry>\n'
 		if urdfVisual.geom_type == p.GEOM_BOX:
-			str = '\t\t\t\t<box size=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\"/>\n'.format(urdfVisual.geom_extents[0],\
-			 urdfVisual.geom_extents[1],urdfVisual.geom_extents[2], prec=precision)
-			file.write(str)
+			str += f'				<box size="{genVec(urdfVisual.geom_extents, precision)}"/>\n'
+
 		if urdfVisual.geom_type == p.GEOM_SPHERE:
-			str = '\t\t\t\t<sphere radius=\"{:.{prec}f}\"/>\n'.format(urdfVisual.geom_radius,\
-			 prec=precision)
-			file.write(str)
+			str += f'				<sphere radius="{round(urdfVisual.geom_radius, precision)}"/>\n'
+
 		if urdfVisual.geom_type == p.GEOM_MESH:
+			str += f'				<mesh filename="{urdfVisual.geom_meshfilename}" scale="{genVec(urdfVisual.geom_meshscale, precision)}"/>\n'
 
-			str = '\t\t\t\t<mesh filename=\"{}\" scale=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\"/>\n'.format(urdfVisual.geom_meshfilename,urdfVisual.geom_meshscale[0],urdfVisual.geom_meshscale[1],urdfVisual.geom_meshscale[2],\
-			 prec=precision)
-			file.write(str)
 		if urdfVisual.geom_type == p.GEOM_CYLINDER:
-			str = '\t\t\t\t<cylinder length=\"{:.{prec}f}\" radius=\"{:.{prec}f}\"/>\n'.format(\
-			 urdfVisual.geom_length, urdfVisual.geom_radius, prec=precision)
-			file.write(str)
+			str += f'				<cylinder length="{round(urdfVisual.geom_length, precision)}" radius="{round(urdfVisual.geom_radius, precision)}"/>\n'
+
 		if urdfVisual.geom_type == p.GEOM_CAPSULE:
-			str = '\t\t\t\t<capsule length=\"{:.{prec}f}\" radius=\"{:.{prec}f}\"/>\n'.format(\
-			 urdfVisual.geom_length, urdfVisual.geom_radius, prec=precision)
-			file.write(str)
+			str += f'				<capsule length="{round(urdfVisual.geom_length, precision)}" radius="{round(urdfVisual.geom_radius, precision)}"/>\n'
 
-		file.write("\t\t\t</geometry>\n")
-		str = '\t\t\t<material name=\"{}\">\n'.format(urdfVisual.material_name)
-		file.write(str)
-		str = '\t\t\t\t<color rgba="{:.{prec}f} {:.{prec}f} {:.{prec}f} {:.{prec}f}" />\n'.format(urdfVisual.material_rgba[0],\
-		 urdfVisual.material_rgba[1],urdfVisual.material_rgba[2],urdfVisual.material_rgba[3],prec=precision)
-		file.write(str)
-		file.write("\t\t\t</material>\n")
-		file.write("\t\t</visual>\n")
+		str += f'			</geometry>\n'
+		str += f'			<material name="{urdfVisual.material_name}">\n'
+		str += f'				<color rgba="{genVec(urdfVisual.material_rgba, precision)}" />\n'
+		str += f'			</material>\n'
+		str += f'		</visual>\n'
 
-	def writeCollisionShape(self, file, urdfCollision, precision=5):
-		file.write("\t\t<collision>\n")
-		str = '\t\t\t<origin rpy="{:.{prec}f} {:.{prec}f} {:.{prec}f}" xyz="{:.{prec}f} {:.{prec}f} {:.{prec}f}"/>\n'.format(\
-		 urdfCollision.origin_rpy[0],urdfCollision.origin_rpy[1],urdfCollision.origin_rpy[2],
-		 urdfCollision.origin_xyz[0],urdfCollision.origin_xyz[1],urdfCollision.origin_xyz[2], prec=precision)
-		file.write(str)
-		file.write("\t\t\t<geometry>\n")
+		return str
+
+	def writeCollisionShape(self, urdfCollision, precision=5):
+		str = f'		<collision>\n'
+		str += f'			<origin rpy="{genVec(urdfCollision.origin_rpy, precision)}" xyz="{genVec(urdfCollision.origin_xyz, precision)}"/>\n'
+
+		str += f'			<geometry>\n'
 		if urdfCollision.geom_type == p.GEOM_BOX:
-			str = '\t\t\t\t<box size=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\"/>\n'.format(urdfCollision.geom_extents[0],\
-			 urdfCollision.geom_extents[1],urdfCollision.geom_extents[2], prec=precision)
-			file.write(str)
+			str += f'				<box size="{genVec(urdfCollision.geom_extents, precision)}"/>\n'
+
 		if urdfCollision.geom_type == p.GEOM_SPHERE:
-			str = '\t\t\t\t<sphere radius=\"{:.{prec}f}\"/>\n'.format(urdfCollision.geom_radius,\
-			 prec=precision)
-			file.write(str)
+			str += f'				<sphere radius="{round(urdfCollision.geom_radius, precision)}"/>\n'
+
 		if urdfCollision.geom_type == p.GEOM_MESH:
-			str = '\t\t\t\t<mesh filename=\"{}\" scale=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\"/>\n'.format(urdfCollision.geom_meshfilename,\
-			 urdfCollision.geom_meshscale[0],urdfCollision.geom_meshscale[1],urdfCollision.geom_meshscale[2],prec=precision)
-			file.write(str)
+			str += f'				<mesh filename="{urdfCollision.geom_meshfilename}" scale="{genVec(urdfCollision.geom_meshscale, precision)}"/>\n'
+
 		if urdfCollision.geom_type == p.GEOM_CYLINDER:
-			str = '\t\t\t\t<cylinder length=\"{:.{prec}f}\" radius=\"{:.{prec}f}\"/>\n'.format(\
-			 urdfCollision.geom_length, urdfCollision.geom_radius, prec=precision)
-			file.write(str)
+			str += f'				<cylinder length="{round(urdfCollision.geom_length, precision)}" radius="{round(urdfCollision.geom_radius, precision)}"/>\n'
+
 		if urdfCollision.geom_type == p.GEOM_CAPSULE:
-			str = '\t\t\t\t<capsule length=\"{:.{prec}f}\" radius=\"{:.{prec}f}\"/>\n'.format(\
-			 urdfCollision.geom_length, urdfCollision.geom_radius, prec=precision)
-			file.write(str)
-		file.write("\t\t\t</geometry>\n")
-		file.write("\t\t</collision>\n")
+			str += f'				<capsule length="{round(urdfCollision.geom_length, precision)}" radius="{round(urdfCollision.geom_radius, precision)}"/>\n'
 
-	def writeLink(self, file, urdfLink, saveVisuals):
-		file.write("\t<link name=\"")
-		file.write(urdfLink.link_name)
-		file.write("\">\n")
+		str += f'			</geometry>\n'
+		str += f'		</collision>\n'
 
-		self.writeInertial(file, urdfLink.urdf_inertial)
+		return str
+
+	def writeLink(self, urdfLink, saveVisuals):
+		str = f'	<link name="{urdfLink.link_name}">\n'
+		str += self.writeInertial(urdfLink.urdf_inertial)
+
 		hasCapsules = False
 		for v in urdfLink.urdf_visual_shapes:
 			if (v.geom_type == p.GEOM_CAPSULE):
 				hasCapsules = True
 		if (saveVisuals and not hasCapsules):
 			for v in urdfLink.urdf_visual_shapes:
-				self.writeVisualShape(file, v)
+				str += self.writeVisualShape(v)
 		for c in urdfLink.urdf_collision_shapes:
-			self.writeCollisionShape(file, c)
-		file.write("\t</link>\n")
+			str += self.writeCollisionShape(c)
+		str += f'	</link>\n'
 
-	def writeJoint(self, file, urdfJoint, precision=5):
+		return str
+
+	def writeJoint(self, urdfJoint, precision=5):
+		str = ''
 		jointTypeStr = "invalid"
+
 		if urdfJoint.joint_type == p.JOINT_REVOLUTE:
 			if urdfJoint.joint_upper_limit < urdfJoint.joint_lower_limit:
 				jointTypeStr = "continuous"
 			else:
 				jointTypeStr = "revolute"
-		if urdfJoint.joint_type == p.JOINT_FIXED:
+		elif urdfJoint.joint_type == p.JOINT_FIXED:
 			jointTypeStr = "fixed"
-		if urdfJoint.joint_type == p.JOINT_PRISMATIC:
+		elif urdfJoint.joint_type == p.JOINT_PRISMATIC:
 			jointTypeStr = "prismatic"
-		str = '\t<joint name=\"{}\" type=\"{}\">\n'.format(urdfJoint.joint_name, jointTypeStr)
-		file.write(str)
-		str = '\t\t<parent link=\"{}\"/>\n'.format(urdfJoint.parent_name)
-		file.write(str)
-		str = '\t\t<child link=\"{}\"/>\n'.format(urdfJoint.child_name)
-		file.write(str)
+		elif urdfJoint.joint_type == p.JOINT_SPHERICAL:
+			jointTypeStr = "spherical"
+			
+		str += f'<joint name="{urdfJoint.joint_name}" type="{jointTypeStr}">\n'
+		str += f'		<parent link="{urdfJoint.parent_name}"/>\n'
+		str += f'		<child link="{urdfJoint.child_name}"/>\n'
 
 		if urdfJoint.joint_type == p.JOINT_PRISMATIC:
 			#todo: handle limits
 			lowerLimit = -0.5
 			upperLimit = 0.5
-			str = '<limit effort="1000.0" lower="{:.{prec}f}" upper="{:.{prec}f}" velocity="0.5"/>'.format(lowerLimit, upperLimit, prec=precision)
-			file.write(str)
+			str += f'		<limit effort="1000.0" lower="{round(lowerLimit, precision)}" upper="{upperLimit(upperLimit, precision)}" velocity="0.5"/>\n'
 
-		file.write("\t\t<dynamics damping=\"1.0\" friction=\"0.0001\"/>\n")
-		str = '\t\t<origin xyz=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\"/>\n'.format(urdfJoint.joint_origin_xyz[0],\
-		 urdfJoint.joint_origin_xyz[1],urdfJoint.joint_origin_xyz[2], prec=precision)
-		str = '\t\t<origin rpy=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\" xyz=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\"/>\n'.format(urdfJoint.joint_origin_rpy[0],\
-		 urdfJoint.joint_origin_rpy[1],urdfJoint.joint_origin_rpy[2],\
-		 urdfJoint.joint_origin_xyz[0],\
-		 urdfJoint.joint_origin_xyz[1],urdfJoint.joint_origin_xyz[2], prec=precision)
+		str += f'		<dynamics damping="1.0" friction="0.0001"/>\n'
+		str += f'		<origin rpy="{genVec(urdfJoint.joint_origin_rpy, precision)}" xyz="{genVec(urdfJoint.joint_origin_xyz, precision)}"/>\n'
+		str += f'		<axis xyz="{genVec(urdfJoint.joint_axis_xyz, precision)}"/>\n'
+		str += f'	</joint>\n'
 
-		file.write(str)
-		str = '\t\t<axis xyz=\"{:.{prec}f} {:.{prec}f} {:.{prec}f}\"/>\n'.format(urdfJoint.joint_axis_xyz[0],\
-		 urdfJoint.joint_axis_xyz[1],urdfJoint.joint_axis_xyz[2], prec=precision)
-		file.write(str)
-		file.write("\t</joint>\n")
+		return str
 
 	def saveUrdf(self, fileName, saveVisuals=True):
 		file = open(fileName, "w")
-		file.write("<?xml version=\"1.0\" ?>\n")
-		file.write("<robot name=\"")
-		file.write(self.robotName)
-		file.write("\">\n")
-
+		str = ""
+		str += f'<?xml version="1.0" ?>\n'
+		str += f'<robot name="{self.robotName}">'
+		
 		for link in self.urdfLinks:
-			self.writeLink(file, link, saveVisuals)
+			str += self.writeLink(link, saveVisuals)
 
 		for joint in self.urdfJoints:
-			self.writeJoint(file, joint)
+			str += self.writeJoint(joint)
 
-		file.write("</robot>\n")
+		str += f'</robot>\n'
+
+		file.write(str)
 		file.close()
 
 	def joinUrdf(self,
@@ -446,12 +421,14 @@ class UrdfEditor(object):
 		#for i in range (len(self.urdfLinks)):
 		#	print("link", i, "=",self.urdfLinks[i].link_name)
 		
+		createdLinks = {}
+
 		base = self.urdfLinks[0]
 
 		#v.tmp_collision_shape_ids=[]
 		baseMass = base.urdf_inertial.mass
-		baseShapes = createShapes(base);
-
+		baseShapes = createShapes(base)
+		createdLinks[base.link_name] = baseShapes
 
 		linkMasses = []
 		linkCollisionShapeIndices = []
@@ -465,18 +442,22 @@ class UrdfEditor(object):
 		linkJointTypes = []
 		linkJointAxis = []
 
+
 		for joint in self.urdfJoints:
 			linkParentIndex = self.linkNameToIndex[joint.parent_name]
 			link = self.urdfLinks[self.linkNameToIndex[joint.child_name]]
 
-			linkJointType = joint.joint_type
-			linkJointAx = joint.joint_axis_xyz
+			shapeIndices = []
+			if link.link_name in createdLinks:
+				shapeIndices = createdLinks[link.link_name]
+			else:
+				shapeIndices = createShapes(link)
+				createdLinks[link.link_name] = shapeIndices
 
-			shapeIndices = createShapes(link)
-
-			linkMasses.append(link.urdf_inertial.mass)
+			
 			linkCollisionShapeIndices.append(shapeIndices[0])
 			linkVisualShapeIndices.append(shapeIndices[1])
+			linkMasses.append(link.urdf_inertial.mass)
 			linkPositions.append(joint.joint_origin_xyz)
 			linkOrientations.append(p.getQuaternionFromEuler(joint.joint_origin_rpy))
 			linkInertialFramePositions.append(link.urdf_inertial.origin_xyz)
