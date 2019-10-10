@@ -21,6 +21,28 @@
 			</geometry>
 		</collision>
 	</link>
+	<link name="S1">
+		<inertial>
+			<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
+			<mass value="1"/>
+			<inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+		</inertial>
+		<visual>
+			<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
+			<geometry>
+				<sphere radius="0.5"/>
+			</geometry>
+			<material name="">
+				<color rgba="1.00000 0.00000 0.00000 1.00000" />
+			</material>
+		</visual>
+		<collision>
+			<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
+			<geometry>
+				<sphere radius="0.5"/>
+			</geometry>
+		</collision>
+	</link>
 	<link name="B2">
 		<inertial>
 			<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
@@ -43,11 +65,18 @@
 			</geometry>
 		</collision>
 	</link>
-<joint name="J1" type="spherical">
+<joint name="B1S1" type="continuous">
 		<parent link="B1"/>
+		<child link="S1"/>
+		<dynamics damping="1.0" friction="0.0001"/>
+		<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.50000"/>
+		<axis xyz="1.00000 0.00000 0.00000"/>
+	</joint>
+<joint name="S1B2" type="continuous">
+		<parent link="S1"/>
 		<child link="B2"/>
 		<dynamics damping="1.0" friction="0.0001"/>
-		<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 1.50000"/>
-		<axis xyz="1.00000 0.00000 0.00000"/>
+		<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.50000"/>
+		<axis xyz="0.00000 1.00000 0.00000"/>
 	</joint>
 </robot>

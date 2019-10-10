@@ -320,7 +320,8 @@ class UrdfEditor(object):
 
 		str += f'		<dynamics damping="1.0" friction="0.0001"/>\n'
 		str += f'		<origin rpy="{genVec(urdfJoint.joint_origin_rpy, precision)}" xyz="{genVec(urdfJoint.joint_origin_xyz, precision)}"/>\n'
-		str += f'		<axis xyz="{genVec(urdfJoint.joint_axis_xyz, precision)}"/>\n'
+		if urdfJoint.joint_type != p.JOINT_SPHERICAL:
+			str += f'		<axis xyz="{genVec(urdfJoint.joint_axis_xyz, precision)}"/>\n'
 		str += f'	</joint>\n'
 
 		return str
