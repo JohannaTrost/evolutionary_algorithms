@@ -22,13 +22,13 @@ editor = UrdfEditor()
 
 b1 = Box("B1")
 s1 = Sphere("S1")
-b2 = Box("B2")
+b2 = Box("B2", [0,0,0.5])
 
 j1 = UrdfJoint("B1", "S1", "B1S1", [0,0,0.5], [0,0,0], [1,0,0], p.JOINT_REVOLUTE)
 j1.joint_lower_limit = -math.pi/4
 j1.joint_upper_limit = math.pi/4
 
-j2 = UrdfJoint("S1", "B2", "S1B2", [0,0,0.5], [0,0,0], [0,1,0], p.JOINT_REVOLUTE)
+j2 = UrdfJoint("S1", "B2", "S1B2", [0,0,0], [0,0,0], [0,1,0], p.JOINT_REVOLUTE)
 j2.joint_lower_limit = -math.pi/6
 j2.joint_upper_limit = math.pi/6
 
