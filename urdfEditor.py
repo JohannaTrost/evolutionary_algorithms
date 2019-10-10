@@ -317,7 +317,10 @@ class UrdfEditor(object):
 			#todo: handle limits
 			lowerLimit = -0.5
 			upperLimit = 0.5
-			str += f'		<limit effort="1000.0" lower="{round(lowerLimit, precision)}" upper="{upperLimit(upperLimit, precision)}" velocity="0.5"/>\n'
+			str += f'		<limit effort="1000.0" lower="{round(lowerLimit, precision)}" upper="{round(upperLimit, precision)}" velocity="0.5"/>\n'
+		if jointTypeStr == "revolute":
+			str += f'		<limit effort="1000.0" lower="{round(urdfJoint.joint_lower_limit, precision)}" upper="{round(urdfJoint.joint_upper_limit, precision)}" velocity="0.5"/>\n'
+
 
 		str += f'		<dynamics damping="1.0" friction="0.0001"/>\n'
 		str += f'		<origin rpy="{genVec(urdfJoint.joint_origin_rpy, precision)}" xyz="{genVec(urdfJoint.joint_origin_xyz, precision)}"/>\n'
@@ -504,8 +507,9 @@ class UrdfEditor(object):
 
 	def motorizeJoint(self, jointName: str, controlMode = p.VELOCITY_CONTROL, targetPosition = 0, targetVelocity = 0, force = 10):
 		p.setJointMotorControl2(self.id, self.jointNameToIndex[jointName], controlMode, targetPosition = targetPosition, targetVelocity = targetVelocity, force = force)
-
-
+		
+	def getJointPosition(self, name: str):
+		return p.getJointState(self.id, self.jointNameToIndex[name])[0]
 
 #def createCollisionShape(collision_shapes: List[UrdfCollision], physicsClientId = 0):
 		

@@ -65,16 +65,18 @@
 			</geometry>
 		</collision>
 	</link>
-<joint name="B1S1" type="continuous">
+<joint name="B1S1" type="revolute">
 		<parent link="B1"/>
 		<child link="S1"/>
+		<limit effort="1000.0" lower="-0.7854" upper="0.7854" velocity="0.5"/>
 		<dynamics damping="1.0" friction="0.0001"/>
 		<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.50000"/>
 		<axis xyz="1.00000 0.00000 0.00000"/>
 	</joint>
-<joint name="S1B2" type="continuous">
+<joint name="S1B2" type="revolute">
 		<parent link="S1"/>
 		<child link="B2"/>
+		<limit effort="1000.0" lower="-0.5236" upper="0.5236" velocity="0.5"/>
 		<dynamics damping="1.0" friction="0.0001"/>
 		<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.50000"/>
 		<axis xyz="0.00000 1.00000 0.00000"/>
