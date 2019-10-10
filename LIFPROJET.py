@@ -33,12 +33,8 @@ editor.addLink(b2)
 editor.addJoint(j1)
 editor.addJoint(j2)
 
-editor.saveUrdf("test.urdf")
-id = p.loadURDF("test.urdf")
-
-p.setJointMotorControl2(bodyIndex=id, controlMode=p.VELOCITY_CONTROL, jointIndex=0, targetVelocity=10, force=500)
-
-p.createConstraint(id, -1, -1, -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 1]) #Anchors the creature to the ground.
+editor.writeLoad("test.urdf", [0,0,1], [0,0,0], True)
+editor.motorizeJoint("B1S1", p.POSITION_CONTROL, math.pi/2, 1)
 
 
 p.setRealTimeSimulation(1, physicsClientId=gui)
