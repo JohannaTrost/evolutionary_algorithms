@@ -39,16 +39,16 @@ editor.addLink(b2)
 editor.addJoint(j1)
 editor.addJoint(j2)
 
-editor.writeLoad("test.urdf", [0,0,1], [0,0,0], True) 
-editor.motorizeJoint("B1S1", targetVelocity = 1)
+editor.writeLoad("test.urdf", [0,0,1], [0,0,0], True)
+editor.motorizeJoint("B1S1", targetVelocity = 1, force=100)
 
 p.setRealTimeSimulation(1, physicsClientId=gui)
 
 while (p.getConnectionInfo(physicsClientId=gui)["isConnected"]):
 	if editor.getJointPosition("B1S1") <= -math.pi/5:
-	    editor.motorizeJoint("B1S1", targetVelocity = 1)
+	    editor.motorizeJoint("B1S1", targetVelocity = 1, force=100)
 	elif editor.getJointPosition("B1S1") >= math.pi/5:
-		editor.motorizeJoint("B1S1", targetVelocity = -1)
+		editor.motorizeJoint("B1S1", targetVelocity = -1, force=100)
 
 
 	p.stepSimulation(physicsClientId=gui)
