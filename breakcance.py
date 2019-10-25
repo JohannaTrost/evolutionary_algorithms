@@ -40,7 +40,7 @@ j = UrdfJoint("L1", "L2", l2, "Joint")
 
 editor.addLink(l1)
 editor.addLink(l2)
-editor.urdfJoints.append(j)
+editor.joints.append(j)
 
 editor.createMultiBody(physicsClientId=gui)
 

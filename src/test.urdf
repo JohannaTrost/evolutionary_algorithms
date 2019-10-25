@@ -1,5 +1,6 @@
 <?xml version="1.0" ?>
-<robot name="">	<link name="B1">
+<robot name="">
+	<link name="B1">
 		<inertial>
 			<origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
 			<mass value="1"/>
