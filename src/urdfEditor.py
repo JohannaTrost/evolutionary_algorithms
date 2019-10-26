@@ -80,16 +80,13 @@ class UrdfEditor(object):
 
 	def __init__(self):
 		self.initialize()
-	def __del__(self):
-		pass
-
 
 
 
 	def initialize(self):
-		self.multiId = -1;
-		self.urdfLinks = []
-		self.urdfJoints = []
+		self.multiId = -1
+		self.links = []
+		self.joints = []
 		self.robotName = ""
 		self.linkNameToIndex = {}
 		self.jointNameToIndex = {}
@@ -161,8 +158,8 @@ class UrdfEditor(object):
 		baseLinkIndex = -1
 		self.convertLinkFromMultiBody(bodyUid, baseLinkIndex, baseLink, physicsClientId)
 		baseLink.link_name = p.getBodyInfo(bodyUid, physicsClientId=physicsClientId)[0].decode("utf-8")
-		self.linkNameToIndex[baseLink.link_name] = len(self.urdfLinks)
-		self.urdfLinks.append(baseLink)
+		self.linkNameToIndex[baseLink.link_name] = len(self.links)
+		self.links.append(baseLink)
 
 		#optionally create child links and joints
 		for j in range(p.getNumJoints(bodyUid, physicsClientId=physicsClientId)):
@@ -170,8 +167,8 @@ class UrdfEditor(object):
 			urdfLink = UrdfLink()
 			self.convertLinkFromMultiBody(bodyUid, j, urdfLink, physicsClientId)
 			urdfLink.link_name = jointInfo[12].decode("utf-8")
-			self.linkNameToIndex[urdfLink.link_name] = len(self.urdfLinks)
-			self.urdfLinks.append(urdfLink)
+			self.linkNameToIndex[urdfLink.link_name] = len(self.links)
+			self.links.append(urdfLink)
 
 			urdfJoint = UrdfJoint()
 			urdfJoint.link = urdfLink
@@ -207,7 +204,7 @@ class UrdfEditor(object):
 			urdfJoint.joint_origin_xyz = pos
 			urdfJoint.joint_origin_rpy = p.getEulerFromQuaternion(orn)
 
-			self.urdfJoints.append(urdfJoint)
+			self.joints.append(urdfJoint)
 
 	def writeInertial(self, urdfInertial, precision=5):
 		str = f'		<inertial>\n'
@@ -331,15 +328,15 @@ class UrdfEditor(object):
 		return str
 
 	def saveUrdf(self, fileName, saveVisuals=True):
-		file = open(fileName, "w")
+		file = open(fileName, "w+")
 		str = ""
 		str += f'<?xml version="1.0" ?>\n'
-		str += f'<robot name="{self.robotName}">'
+		str += f'<robot name="{self.robotName}">\n'
 		
-		for link in self.urdfLinks:
+		for link in self.links:
 			str += self.writeLink(link, saveVisuals)
 
-		for joint in self.urdfJoints:
+		for joint in self.joints:
 			str += self.writeJoint(joint)
 
 		str += f'</robot>\n'
@@ -357,16 +354,16 @@ class UrdfEditor(object):
 							 parentPhysicsClientId=0,
 							 childPhysicsClientId=0):
 
-		childLinkIndex = len(self.urdfLinks)
-		insertJointIndex = len(self.urdfJoints)
+		childLinkIndex = len(self.links)
+		insertJointIndex = len(self.joints)
 
 		#combine all links, and add a joint
 
 		for link in childEditor.urdfLinks:
-			self.linkNameToIndex[link.link_name] = len(self.urdfLinks)
-			self.urdfLinks.append(link)
+			self.linkNameToIndex[link.link_name] = len(self.links)
+			self.links.append(link)
 		for joint in childEditor.urdfJoints:
-			self.urdfJoints.append(joint)
+			self.joints.append(joint)
 		#add a new joint between a particular
 
 		jointPivotQuatInChild = p.getQuaternionFromEuler(jointPivotRPYInChild)
@@ -375,28 +372,28 @@ class UrdfEditor(object):
 		#apply this invJointPivot***InChild to all inertial, visual and collision
 		#element in the child link
 		#inertial
-		pos, orn = p.multiplyTransforms(self.urdfLinks[childLinkIndex].urdf_inertial.origin_xyz,
-																		p.getQuaternionFromEuler(self.urdfLinks[childLinkIndex].urdf_inertial.origin_rpy),
+		pos, orn = p.multiplyTransforms(self.links[childLinkIndex].urdf_inertial.origin_xyz,
+																		p.getQuaternionFromEuler(self.links[childLinkIndex].urdf_inertial.origin_rpy),
 																		invJointPivotXYZInChild,
 																		invJointPivotQuatInChild,
 																		physicsClientId=parentPhysicsClientId)
-		self.urdfLinks[childLinkIndex].urdf_inertial.origin_xyz = pos
-		self.urdfLinks[childLinkIndex].urdf_inertial.origin_rpy = p.getEulerFromQuaternion(orn)
+		self.links[childLinkIndex].urdf_inertial.origin_xyz = pos
+		self.links[childLinkIndex].urdf_inertial.origin_rpy = p.getEulerFromQuaternion(orn)
 		#all visual
-		for v in self.urdfLinks[childLinkIndex].urdf_visual_shapes:
+		for v in self.links[childLinkIndex].urdf_visual_shapes:
 			pos, orn = p.multiplyTransforms(v.origin_xyz, p.getQuaternionFromEuler(v.origin_rpy),
 																			invJointPivotXYZInChild, invJointPivotQuatInChild)
 			v.origin_xyz = pos
 			v.origin_rpy = p.getEulerFromQuaternion(orn)
 		#all collision
-		for c in self.urdfLinks[childLinkIndex].urdf_collision_shapes:
+		for c in self.links[childLinkIndex].urdf_collision_shapes:
 			pos, orn = p.multiplyTransforms(c.origin_xyz, p.getQuaternionFromEuler(c.origin_rpy),
 																			invJointPivotXYZInChild, invJointPivotQuatInChild)
 			c.origin_xyz = pos
 			c.origin_rpy = p.getEulerFromQuaternion(orn)
 
-		childLink = self.urdfLinks[childLinkIndex]
-		parentLink = self.urdfLinks[parentLinkIndex]
+		childLink = self.links[childLinkIndex]
+		parentLink = self.links[parentLinkIndex]
 
 		joint = UrdfJoint()
 		joint.link = childLink
@@ -415,7 +412,7 @@ class UrdfEditor(object):
 		#self.urdfJoints.append(joint)
 
 		#so make sure to insert the joint in the right place, to links/joints match
-		self.urdfJoints.insert(insertJointIndex, joint)
+		self.joints.insert(insertJointIndex, joint)
 		return joint
 
 	#def createMultiBody(self, basePosition=[0, 0, 0], baseOrientation=[0, 0, 0, 1], physicsClientId=0):
@@ -495,11 +492,16 @@ class UrdfEditor(object):
 	#	return obUid
 	
 	def addLink(self, link: UrdfLink):
-		self.linkNameToIndex[link.link_name] = len(self.urdfLinks)
-		self.urdfLinks.append(link)
+		self.linkNameToIndex[link.link_name] = len(self.links)
+		self.links.append(link)
 	def addJoint(self, joint: UrdfJoint):
-		self.jointNameToIndex[joint.joint_name] = len(self.urdfJoints)
-		self.urdfJoints.append(joint)
+		self.jointNameToIndex[joint.joint_name] = len(self.joints)
+		self.joints.append(joint)
+
+	def getLink(self, name: str):
+		return self.links[self.linkNameToIndex[name]]
+	def getJoint(self, name: str):
+		return self.joints[self.jointNameToIndex[name]]
 	
 	def writeLoad(self, pathToSave: str, position=[0,0,0], orientation=[0,0,0], useFixedBase = False):
 		self.saveUrdf(pathToSave)
