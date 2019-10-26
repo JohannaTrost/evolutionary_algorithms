@@ -1,8 +1,9 @@
 import numpy as np
 import jojo_evolution.simplePopulation_test as spt
+import matplotlib.pylab as plt
 
-# number of boxes for individuals
-num_obj = len(spt.individual[1])
+num_obj = 3
+generations, parent_ids, distances = spt.simulate_evolution(100, 100, num_obj)
 col_names = ''
 
 # generate column names
@@ -17,7 +18,7 @@ col_names += 'fitness(distance from start), parent1, parent2'
 
 # fill table content into 2D array
 data = []
-for i, generation in enumerate(spt.generations):
+for i, generation in enumerate(generations):
         for j, individual in enumerate(generation):
                 row = []
                 # generation
@@ -29,14 +30,29 @@ for i, generation in enumerate(spt.generations):
                         row = np.concatenate([np.asarray(row), np.asarray(box)])
                 row = list(row)
                 # fitness(distance)
-                row.append(spt.all_distances[i][j])
+                row.append(distances[i][j])
                 # because no parents for first population
                 if i > 0:
-                        row.append(spt.all_parent_ids[i][j][0])
-                        row.append(spt.all_parent_ids[i][j][1])
+                        row.append(parent_ids[i][j][0])
+                        row.append(parent_ids[i][j][1])
                 else:
                         row.append(np.nan)
                         row.append(np.nan)
                 data.append(row)
+# save tale as csv
 np.savetxt("jojo_evolution/evo_results.csv", data, delimiter=",", header=col_names, comments='')
+
+# create plots over best and average performance of individuals
+plt.figure()
+plt.subplot(1, 2, 1)
+plt.plot(np.mean(distances, axis=1))
+plt.title('average per generation')
+plt.ylabel('distance')
+plt.xlabel('generation')
+plt.subplot(1, 2, 2)
+plt.plot(np.max(distances, axis=1))
+plt.title('best performer per generation')
+plt.xlabel('generation')
+plt.suptitle('{} individuals'.format(len(distances[0])))
+plt.savefig("jojo_evolution/evo_results.png")
 
