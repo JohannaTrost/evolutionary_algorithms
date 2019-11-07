@@ -6,7 +6,7 @@ import os
 class Creature(object):
 	def __init__(self, name="crr"):
 		self.name = name
-		self.editor = UrdfEditor()
+		self.editor = UrdfEditor(name)
 		self.editor.addLink(Box("Base"))
 
 	def load(self, position = [0,0,0], orientation=[0,0,0], useFixedBase=False):
@@ -23,13 +23,16 @@ class Creature(object):
 		self.editor.addLink(sphere)
 		self.editor.addLink(newLink)
 
-		self.editor.addJoint(UrdfJointContinuous(
+		self.editor.addJoint(UrdfJointRevolute(
 			parentLimbName, 
 			sphere.name, 
 			f"Jx_{parentLimbName}/{newChildLimbName}", 
 			UrdfOrigin(jointOrigin, jointOrientation), [1,0,0]))
-		self.editor.addJoint(UrdfJointContinuous(
+		self.editor.addJoint(UrdfJointRevolute(
 			sphere.name, 
 			newChildLimbName, 
 			f"Jy_{parentLimbName}/{newChildLimbName}", 
 			UrdfOrigin([0,0,0], [0,0,0]), [0,1,0]))
+
+	def mergeWith():
+	    pass #TODO

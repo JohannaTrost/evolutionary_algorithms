@@ -205,11 +205,12 @@ class UrdfJointContinuous(UrdfJoint):
 
 class UrdfEditor(object):
 
-	def __init__(self):
+	def __init__(self, robotName="robot"):
+		self.robotName = robotName
+
 		self.multiId = -1
 		self.links = []
-		self.joints = []
-		self.robotName = "robot"
+		self.joints = []		
 		self.linkNameToIndex = {}
 		self.jointNameToIndex = {}
 
