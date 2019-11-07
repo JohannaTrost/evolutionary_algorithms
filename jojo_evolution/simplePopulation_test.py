@@ -8,14 +8,14 @@ def distance(x1, x2, y1, y2):
     return ((x2 - x1)**2 + (y2 - y1)**2)**0.5
 
 
-def generate_rand_genome(num_objects):
+def generate_rand_genome(num_objects, mutation_factor=1):
     genome = []
     for obj in range(num_objects):
-        # choose size power and velocity for current box randomly
-        sizeX, sizeY, sizeZ = np.random.rand(3) / 2 + 0.4
+        # genomechoose size power and velocity for current box randomly
+        sizeX, sizeY, sizeZ = np.random.rand(3) / 2 * mutation_factor + 0.4
         # number of power/ velocity has to correspond to number of links (num_objects-1)
-        velocity = (np.random.rand() * 2 - 1) * 10
-        power = np.random.rand() * 5 + 5
+        velocity = ((np.random.rand() * 2 - 1) * mutation_factor) * 10
+        power = np.random.rand() * 5 * mutation_factor + 5
         # genome[0] corresponds to first box etc.
         genome.append([sizeX, sizeY, sizeZ, velocity, power])
     return genome
@@ -41,7 +41,7 @@ def generate_visual_body(num_objs, genome):
 
     box_ids = []
     for obj in range(num_objs):
-
+        assert [gene for gene in genome[obj]]
         # create collision shapes for the objects
         box_ids.append(p.createCollisionShape(p.GEOM_BOX,
                                               halfExtents=[genome[obj][0], genome[obj][1], genome[obj][2]]))  # [sizeX, sizeY, sizeZ]
@@ -184,7 +184,7 @@ def randoms_between(lows, highs):
 # a is alpha = 0.5
 ####### OUTPUT #######
 # genome for individual [[x1, y1, z1, velo1, pow1][x2, y2, z2, velo2, pow2]...]
-def generate_child_genome(p1, p2, a):
+def generate_child_genome(p1, p2, a, mutation_prob):
     child = []
     for obj_p1, obj_p2 in zip(p1, p2):
         # get o (average of parents)and d (distance between parents)
@@ -194,17 +194,25 @@ def generate_child_genome(p1, p2, a):
         # (calcul from p.39 of "Concepts fondamentaux des algorithmes évolutionnistes" by Jean-Baptiste Mouret)
         low_bounds, high_bounds = limit(o, d, a)
         child.append(randoms_between(low_bounds, high_bounds))
+    # mutate genes with a chance of e.g. 2% -> replace certain gene with a new random value
+
+    child = np.asarray(child)
+    mutate = np.random.random(child.shape) < mutation_prob
+    if np.any(mutate):
+        rands = np.asarray(generate_rand_genome(len(child)))
+        child[mutate] = rands[mutate]
+    child = list(child)
     return child
 
 
-def crossing(parents):
+def crossing(parents, mutation_prob):
     next_generation = []
     # save parent couple (only ids) for each individual
     all_parents = []
     alpha = 0.5
     num_limbs = len(parents[0][0][1])
     for couple in parents:
-        genome_child = generate_child_genome(couple[0][1], couple[1][1], alpha)
+        genome_child = generate_child_genome(couple[0][1], couple[1][1], alpha, mutation_prob=mutation_prob)
         next_generation.append(create_individual(num_objects=num_limbs, genome=genome_child))
         # contains [id, genome, basePosisiton]
         all_parents.append((couple[0][0], couple[1][0]))
@@ -223,7 +231,7 @@ def input_manually():
         print("Not a number")
 
 
-def simulate_evolution(num_generations, pop_size, limbs_num=3):
+def simulate_evolution(num_generations, pop_size, mutation_prob, limbs_num=3):
     # inits for simulation
     sim_time = 10 #s
     dt = 1. / 240.
@@ -233,7 +241,7 @@ def simulate_evolution(num_generations, pop_size, limbs_num=3):
     p.setGravity(0, 0, -9.81)
     assert(p.isConnected())
 
-    initial_population = [create_individual() for i in range(pop_size)]
+    initial_population = [create_individual(limbs_num) for i in range(pop_size)]
     assert(len(initial_population) == pop_size and all(ind is not None for ind in initial_population))
     disable_collision(initial_population)
 
@@ -263,13 +271,13 @@ def simulate_evolution(num_generations, pop_size, limbs_num=3):
         all_distances.append(distances)
 
         # don't do selection and crossing for the last generation
-        if (i < num_generations - 1):
+        if i < num_generations - 1:
             parents_selected = selection(curr_population)
 
             # removing visual bodies of pop from simulation
-            [p.removeBody(indiv[0]) for indiv in curr_population]
+            [p.removeBody(ind[0]) for ind in curr_population]
 
-            curr_population, parent_ids = crossing(parents_selected)
+            curr_population, parent_ids = crossing(parents_selected, mutation_prob=mutation_prob)
             all_parent_ids.append(parent_ids)
             disable_collision(curr_population)
 
