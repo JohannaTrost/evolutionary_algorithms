@@ -6,7 +6,7 @@ import os
 class Creature(object):
 	def __init__(self, name="crr"):
 		self.name = name
-		self.editor = UrdfEditor()
+		self.editor = UrdfEditor(name)
 		self.editor.addLink(Box("Base"))
 
 	def load(self, position = [0,0,0], orientation=[0,0,0], useFixedBase=False):
@@ -18,10 +18,21 @@ class Creature(object):
 	def addLimb(self, parentLimbName: str, newChildLimbName: str, jointOrigin = [0,0,0], jointOrientation = [0,0,0], childOrigin = [0,0,0], extent = [1,1,1]):
 		sphere = Sphere(f"S_{parentLimbName}/{newChildLimbName}")
 		previousLink = self.editor.getLink(parentLimbName)
-		newLink = Box(newChildLimbName, childOrigin, [0,0,0], extent)
+		newLink = Box(newChildLimbName, UrdfOrigin(childOrigin, [0,0,0]), extent)
 
-		self.editor.addLink(Sphere(sphere.link_name))
+		self.editor.addLink(sphere)
 		self.editor.addLink(newLink)
 
-		self.editor.addJoint(UrdfJoint(parentLimbName, sphere.link_name, f"Jx_{parentLimbName}/{newChildLimbName}", jointOrigin, jointOrientation, [1,0,0]))
-		self.editor.addJoint(UrdfJoint(sphere.link_name, newChildLimbName, f"Jy_{parentLimbName}/{newChildLimbName}", [0,0,0], [0,0,0], [0,1,0]))
+		self.editor.addJoint(UrdfJointRevolute(
+			parentLimbName, 
+			sphere.name, 
+			f"Jx_{parentLimbName}/{newChildLimbName}", 
+			UrdfOrigin(jointOrigin, jointOrientation), [1,0,0]))
+		self.editor.addJoint(UrdfJointRevolute(
+			sphere.name, 
+			newChildLimbName, 
+			f"Jy_{parentLimbName}/{newChildLimbName}", 
+			UrdfOrigin([0,0,0], [0,0,0]), [0,1,0]))
+
+	def mergeWith():
+	    pass #TODO
