@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <robot name="Creature">
-  <link name="Base">
+  <link name="B1">
     <inertial>
       <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
       <mass value="1.00000"/>
@@ -22,7 +22,7 @@
       </geometry>
     </collision>
   </link>
-  <link name="S_Base/Limb1">
+  <link name="S_B1/B2">
     <inertial>
       <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
       <mass value="1.00000"/>
@@ -44,14 +44,14 @@
       </geometry>
     </collision>
   </link>
-  <link name="Limb1">
+  <link name="B2">
     <inertial>
       <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
       <mass value="1.00000"/>
       <inertia ixx="0.00000" ixy="0" ixz="0" iyy="0.00000" iyz="0" izz="0.00000"/>
     </inertial>
     <visual>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.50000"/>
+      <origin rpy="0.00000 0.00000 0.00000" xyz="1.00000 0.00000 0.00000"/>
       <geometry>
         <box size="1.00000 1.00000 1.00000"/>
       </geometry>
@@ -60,143 +60,23 @@
       </material>
     </visual>
     <collision>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.50000"/>
+      <origin rpy="0.00000 0.00000 0.00000" xyz="1.00000 0.00000 0.00000"/>
       <geometry>
         <box size="1.00000 1.00000 1.00000"/>
       </geometry>
     </collision>
   </link>
-  <link name="S_Base/Limb2">
-    <inertial>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-      <mass value="1.00000"/>
-      <inertia ixx="0.00000" ixy="0" ixz="0" iyy="0.00000" iyz="0" izz="0.00000"/>
-    </inertial>
-    <visual>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-      <geometry>
-        <sphere radius="0.50000"/>
-      </geometry>
-      <material name="default">
-        <color rgba="1.00000 0.00000 0.00000 1.00000"/>
-      </material>
-    </visual>
-    <collision>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-      <geometry>
-        <sphere radius="0.50000"/>
-      </geometry>
-    </collision>
-  </link>
-  <link name="Limb2">
-    <inertial>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-      <mass value="1.00000"/>
-      <inertia ixx="0.00000" ixy="0" ixz="0" iyy="0.00000" iyz="0" izz="0.00000"/>
-    </inertial>
-    <visual>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 1.00000"/>
-      <geometry>
-        <box size="1.00000 1.00000 2.00000"/>
-      </geometry>
-      <material name="default">
-        <color rgba="1.00000 0.00000 0.00000 1.00000"/>
-      </material>
-    </visual>
-    <collision>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 1.00000"/>
-      <geometry>
-        <box size="1.00000 1.00000 2.00000"/>
-      </geometry>
-    </collision>
-  </link>
-  <link name="S_Base/Limb3">
-    <inertial>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-      <mass value="1.00000"/>
-      <inertia ixx="0.00000" ixy="0" ixz="0" iyy="0.00000" iyz="0" izz="0.00000"/>
-    </inertial>
-    <visual>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-      <geometry>
-        <sphere radius="0.50000"/>
-      </geometry>
-      <material name="default">
-        <color rgba="1.00000 0.00000 0.00000 1.00000"/>
-      </material>
-    </visual>
-    <collision>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-      <geometry>
-        <sphere radius="0.50000"/>
-      </geometry>
-    </collision>
-  </link>
-  <link name="Limb3">
-    <inertial>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-      <mass value="1.00000"/>
-      <inertia ixx="0.00000" ixy="0" ixz="0" iyy="0.00000" iyz="0" izz="0.00000"/>
-    </inertial>
-    <visual>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 1.00000"/>
-      <geometry>
-        <box size="1.00000 1.00000 2.00000"/>
-      </geometry>
-      <material name="default">
-        <color rgba="1.00000 0.00000 0.00000 1.00000"/>
-      </material>
-    </visual>
-    <collision>
-      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 1.00000"/>
-      <geometry>
-        <box size="1.00000 1.00000 2.00000"/>
-      </geometry>
-    </collision>
-  </link>
-  <joint name="Jx_Base/Limb1" type="revolute">
-    <parent link="Base"/>
-    <child link="S_Base/Limb1"/>
+  <joint name="Jx_B1/B2" type="revolute">
+    <parent link="B1"/>
+    <child link="S_B1/B2"/>
     <dynamics damping="1.0" friction="0.0001"/>
-    <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.50000"/>
+    <origin rpy="0.00000 0.00000 0.00000" xyz="1.00000 0.00000 0.00000"/>
     <axis xyz="1.00000 0.00000 0.00000"/>
     <limit effort="1000.0" lower="-3.14159" upper="3.14159" velocity="0.5"/>
   </joint>
-  <joint name="Jy_Base/Limb1" type="revolute">
-    <parent link="S_Base/Limb1"/>
-    <child link="Limb1"/>
-    <dynamics damping="1.0" friction="0.0001"/>
-    <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-    <axis xyz="0.00000 1.00000 0.00000"/>
-    <limit effort="1000.0" lower="-3.14159" upper="3.14159" velocity="0.5"/>
-  </joint>
-  <joint name="Jx_Base/Limb2" type="revolute">
-    <parent link="Base"/>
-    <child link="S_Base/Limb2"/>
-    <dynamics damping="1.0" friction="0.0001"/>
-    <origin rpy="0.00000 1.57080 0.00000" xyz="0.50000 0.00000 0.00000"/>
-    <axis xyz="1.00000 0.00000 0.00000"/>
-    <limit effort="1000.0" lower="-3.14159" upper="3.14159" velocity="0.5"/>
-  </joint>
-  <joint name="Jy_Base/Limb2" type="revolute">
-    <parent link="S_Base/Limb2"/>
-    <child link="Limb2"/>
-    <dynamics damping="1.0" friction="0.0001"/>
-    <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
-    <axis xyz="0.00000 1.00000 0.00000"/>
-    <limit effort="1000.0" lower="-3.14159" upper="3.14159" velocity="0.5"/>
-  </joint>
-  <joint name="Jx_Base/Limb3" type="revolute">
-    <parent link="Base"/>
-    <child link="S_Base/Limb3"/>
-    <dynamics damping="1.0" friction="0.0001"/>
-    <origin rpy="0.00000 -1.57080 0.00000" xyz="-0.50000 0.00000 0.00000"/>
-    <axis xyz="1.00000 0.00000 0.00000"/>
-    <limit effort="1000.0" lower="-3.14159" upper="3.14159" velocity="0.5"/>
-  </joint>
-  <joint name="Jy_Base/Limb3" type="revolute">
-    <parent link="S_Base/Limb3"/>
-    <child link="Limb3"/>
+  <joint name="Jy_B1/B2" type="revolute">
+    <parent link="S_B1/B2"/>
+    <child link="B2"/>
     <dynamics damping="1.0" friction="0.0001"/>
     <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
     <axis xyz="0.00000 1.00000 0.00000"/>

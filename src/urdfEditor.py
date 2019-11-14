@@ -240,7 +240,11 @@ class UrdfEditor(object):
 	
 	def writeLoad(self, pathToSave: str, position=[0,0,0], orientation=[0,0,0], useFixedBase = False):
 		self.saveUrdf(pathToSave)
-		self.id = p.loadURDF(pathToSave, position, p.getQuaternionFromEuler(orientation), useFixedBase = useFixedBase)
+		self.multiId = p.loadURDF(pathToSave, position, p.getQuaternionFromEuler(orientation), useFixedBase = useFixedBase)
+
+	def getPosition(self):
+		return p.getBasePositionAndOrientation(self.multiId)[0]
+
 
 	def motorizeJoint(self, jointName: str, controlMode = p.VELOCITY_CONTROL, targetPosition = 0, targetVelocity = 0, force = 10):
 		p.setJointMotorControl2(self.id, self.jointNameToIndex[jointName], controlMode, targetPosition = targetPosition, targetVelocity = targetVelocity, force = force)
