@@ -1,5 +1,5 @@
-from urdfEditor import *
-from Shapes import *
+from src.urdfEditor import *
+from src.Shapes import *
 
 import os
 import numpy as np

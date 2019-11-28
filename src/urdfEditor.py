@@ -19,7 +19,7 @@ class UrdfSerializable(object):
 
 
 class UrdfOrigin(UrdfSerializable):
-	def __init__(self, origin_xyz = [0,0,0], origin_rpy = [0,0,0]):
+	def __init__(self, origin_xyz=[0,0,0], origin_rpy=[0,0,0]):
 		self.origin_xyz = origin_xyz
 		self.origin_rpy = origin_rpy
 
@@ -50,7 +50,7 @@ class UrdfInertial(UrdfSerializable):
 
 class UrdfContact(object):
 
-	def __init__(self, lateral_friction = 1, rolling_friction = 0, spinning_friction = 0):
+	def __init__(self, lateral_friction=1, rolling_friction=0, spinning_friction=0):
 		self.lateral_friction = lateral_friction
 		self.rolling_friction = rolling_friction
 		self.spinning_friction = spinning_friction
@@ -80,7 +80,7 @@ class UrdfSphere(UrdfGeometry):
 
 
 class UrdfMaterial(UrdfSerializable):
-	def __init__(self, name="default", colorRGBA = [1.0, 0.0, 0.0, 1.0]):
+	def __init__(self, name="default", colorRGBA=[1.0, 0.0, 0.0, 1.0]):
 		self.name = name
 		self.colorRGBA = colorRGBA
 
@@ -238,15 +238,16 @@ class UrdfEditor(object):
 	def getJoint(self, name: str):
 		return self.joints[self.jointNameToIndex[name]]
 	
-	def writeLoad(self, pathToSave: str, position=[0,0,0], orientation=[0,0,0], useFixedBase = False):
+	def writeLoad(self, pathToSave, position=[0,0,0], orientation=[0,0,0], useFixedBase=False):
 		self.saveUrdf(pathToSave)
-		self.multiId = p.loadURDF(pathToSave, position, p.getQuaternionFromEuler(orientation), useFixedBase = useFixedBase)
+		self.multiId = p.loadURDF(pathToSave, position, p.getQuaternionFromEuler(orientation), useFixedBase=useFixedBase)
 
 	def getBasePosition(self):
 		return p.getBasePositionAndOrientation(self.multiId)[0]
 
 
-	def motorizeJoint(self, jointName: str, controlMode = p.VELOCITY_CONTROL, targetPosition = 0, targetVelocity = 0, force = 10):
-		p.setJointMotorControl2(self.multiId, self.jointNameToIndex[jointName], controlMode, targetPosition = targetPosition, targetVelocity = targetVelocity, force = force)
+	def motorizeJoint(self, jointName: str, controlMode=p.VELOCITY_CONTROL, targetPosition=0, targetVelocity=0, force=2):
+		p.setJointMotorControl2(self.multiId, self.jointNameToIndex[jointName], controlMode,
+								targetPosition=targetPosition, targetVelocity=targetVelocity, force=force)
 	def getJointPosition(self, name: str):
 		return p.getJointState(self.multiId, self.jointNameToIndex[name])[0]

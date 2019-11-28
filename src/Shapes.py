@@ -1,4 +1,4 @@
-from urdfEditor import *
+from src.urdfEditor import *
 
 class Box(UrdfLink):
 	def __init__(self, name, origin=UrdfOrigin(), extents = [1,1,1]):
