@@ -4,7 +4,7 @@ from math import pi
 
 from lxml import etree
 from lxml.builder import E
-from typing import List
+from typing import List, Iterable
 
 
 URDF_FLOAT_PREC = 5
@@ -207,10 +207,10 @@ class UrdfEditor(object):
 
 	def __init__(self, robotName="robot"):
 		self.robotName = robotName
-
 		self.multiId = -1
+
 		self.links = []
-		self.joints = []		
+		self.joints = []
 		self.linkNameToIndex = {}
 		self.jointNameToIndex = {}
 
@@ -233,10 +233,10 @@ class UrdfEditor(object):
 		self.jointNameToIndex[joint.name] = len(self.joints)
 		self.joints.append(joint)
 
-	def getLink(self, name: str):
-		return self.links[self.linkNameToIndex[name]]
-	def getJoint(self, name: str):
-		return self.joints[self.jointNameToIndex[name]]
+	def getLink(self, parentName: str) -> UrdfLink:
+		return self.links[self.linkNameToIndex[parentName]]
+	def getJoint(self, parentName: str, childName: str) -> UrdfJoint:
+		return self.joints[self.jointNameToIndex[parentName]]
 	
 	def writeLoad(self, pathToSave: str, position=[0,0,0], orientation=[0,0,0], useFixedBase = False):
 		self.saveUrdf(pathToSave)
@@ -245,8 +245,26 @@ class UrdfEditor(object):
 	def getBasePosition(self):
 		return p.getBasePositionAndOrientation(self.multiId)[0]
 
+	def getJointIndices(self, jointNames: Iterable[str]) -> List[int]:
+		return [self.jointNameToIndex[k] for k in jointNames]
 
-	def motorizeJoint(self, jointName: str, controlMode = p.VELOCITY_CONTROL, targetPosition = 0, targetVelocity = 0, force = 10):
-		p.setJointMotorControl2(self.multiId, self.jointNameToIndex[jointName], controlMode, targetPosition = targetPosition, targetVelocity = targetVelocity, force = force)
+	def motorizeJoint(self, 
+				   jointName: str, 
+				   controlMode = p.VELOCITY_CONTROL, 
+				   targetPosition = 0, 
+				   targetVelocity = 0,
+				   force = 10,
+				   maxVelocity = 1000
+				   ):
+		p.setJointMotorControl2(
+			self.multiId, 
+			self.jointNameToIndex[jointName], 
+			controlMode, 
+			targetPosition = targetPosition, 
+			targetVelocity=targetVelocity,
+			maxVelocity=maxVelocity,
+			force = force)
+
+
 	def getJointPosition(self, name: str):
 		return p.getJointState(self.multiId, self.jointNameToIndex[name])[0]

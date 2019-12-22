@@ -5,10 +5,14 @@ import math
 from Shapes import *
 from Creature import *
 
-import lxml.etree as etree
+from typing import Iterable, Tuple, Callable, T
 
-from typing import Iterable, Tuple, Callable
 
+def isInIntervalArray(data: Iterable[T], intervals: Iterable[Tuple[T, T]]) -> bool:
+	for x, interval in zip(data, intervals):
+		if not(interval[0] <= x <= interval[1]):
+			return False
+	return True
 
 AnglePair = Tuple[float, float]
 AngleList = Iterable[AnglePair]
@@ -21,29 +25,28 @@ AngleList = Iterable[AnglePair]
 MotorCallback = Callable[[AnglePair, str, str], None]
 
 class MotorController(object):
-	def __init__(self, targets: AngleList, func: MotorCallback, deltaTime = 1.0):
+	def __init__(self, targets: AngleList, func: MotorCallback, parentLimbName: str, childLimbName: str):
 		self.positionTargets = targets
 		self.func = func
-		self.deltaTime = deltaTime
-		
-		self._timerStart = 0.0
-		self._index = 0
+		self.parentName = parentLimbName
+		self.childName = childLimbName
 
-	def Start(self):
-		self._timerStart = time.time()
-		
+		self._index = 0
 	
-	def update(self, creature: Creature, parentLimbName: str, childLimbName: str):
-		elapsed = time.time() - self._timerStart
+	def start(self):
+		self.func(self.positionTargets[self._index], self.parentName, self.childName)
+
+	def update(self, currentAngle: AnglePair):
+		angleErrorMargin = 0.5
 		
-		if elapsed >= self.deltaTime:
+		trgs = self.positionTargets[self._index]
+		if isInIntervalArray(currentAngle, [(trgs[0] - angleErrorMargin, trgs[0] + angleErrorMargin), (trgs[1] - angleErrorMargin, trgs[1] + angleErrorMargin)]):
 			if self._index + 1 >= len(self.positionTargets):
 				self._index = 0
 			else:
-				self._index += 1			
-			self.func(self.positionTargets[self._index], parentLimbName, childLimbName)
-			
-			self._timerStart = time.time()
+				self._index += 1
+
+			self.func(self.positionTargets[self._index], self.parentName, self.childName)
 
 ##########################################
 gui = p.connect(p.GUI)
@@ -53,26 +56,30 @@ p.setGravity(0,0,-9.81)
 p.createMultiBody(0, p.createCollisionShape(p.GEOM_PLANE),
 p.createVisualShape(p.GEOM_PLANE))
 
+
+
 def creatureControl(angles, parent, child):
-	joints = c.getJointNames(parent, child)
-	c.editor.motorizeJoint(joints[0], p.POSITION_CONTROL, targetPosition=angles[0], force=8)
-	c.editor.motorizeJoint(joints[1], p.POSITION_CONTROL, targetPosition=angles[1], force=8)
+	force = 200
+	jointNames = c.getJointNames(parent, child)
+	jointIndices = c.editor.getJointIndices(jointNames)
+
+	for i, jointIndex in enumerate(jointIndices):
+		p.setJointMotorControl2(c.editor.multiId, jointIndex, p.POSITION_CONTROL, targetPosition=angles[i], force=force, maxVelocity=1)
+
 
 
 m = MotorController([
-		(0, math.pi/4), 
-		(-math.pi / 4, 0), 
-		(0, -math.pi/4), 
-		(math.pi / 4, 0)
-	],
+		(0, math.pi/3),
+		(-math.pi / 3, 0), 
+		(0, -math.pi/3),
+		(math.pi / 3, 0)],
 		creatureControl,
-		0.25
-	)
+		"B1", "B2")
 
 
 c = Creature("Creature", [0, 0, 3])
 
-c.addLimb("", childLimbName="B1", childOrigin=UrdfOrigin([0,0,0]))
+c.addLimb("", "B1", childOrigin=UrdfOrigin([0,0,0]))
 c.addLimb("B1", "B2", UrdfOrigin([1,0,0]), UrdfOrigin([1,0,0]))
 c.addLimb("B1", "B3", UrdfOrigin([-1,0,0]), UrdfOrigin([-1,0,0]))
 
@@ -80,15 +87,9 @@ c.load([0,0,0], True)
 
 p.setRealTimeSimulation(1, physicsClientId=gui)
 
+m.start()
 while (p.getConnectionInfo(physicsClientId=gui)["isConnected"]):
-	m.update(c, "B1", "B2")
+	m.update(c.getAngleBetween("B1", "B2"))
 
 	p.stepSimulation(physicsClientId=gui)
 	time.sleep(0.01)
-
-
-
-tree = Node("root")
-
-genRandomTree(tree, 3, 6)
-tree.print()
