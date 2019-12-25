@@ -1,4 +1,4 @@
-﻿################################################################################
+################################################################################
 # Ce fichier .gitignore a été automatiquement créé par Microsoft(R) Visual Studio.
 ################################################################################
 
@@ -7,10 +7,6 @@
 *.vcxproj
 *.filters
 *.user
-*.pyproj
-/LIFProjet
-
-/.idea
-/__pycache__
-/LifProjetEnv
-/src/__pycache__
+.idea/*
+/src/__pycache__/*
+all_gene_pools*
