@@ -1,4 +1,4 @@
-from src.simulation import simulate_multi_core, connect_to_servers
+from src.simulation import simulate_multi_core
 import src.evolution as evo
 import src.visualize as vis
 import src.IO as IO
@@ -10,7 +10,7 @@ import time
 def main():
     # argument parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--individuals', default=None, type=int,
+    parser.add_argument('-i', '--individuals', default=10, type=int,
                         help='number of individuals per generation - In case visualization mode was chosen, a random '
                              'set of i individuals will be chosen for displaying (default=10)')
 
@@ -85,19 +85,13 @@ def main():
         print('saving output to ' + parent_dir)
         print('')
 
-        # make simulation IDs running on as many servers as there are cores selected
-        sim_ids = connect_to_servers(args.cores)
-
-        print('Connecting to physics server {}'.format(sim_ids))
-
         # iterate over generations
         for generation in range(args.generation, args.generations + args.generation):
             start = time.time()
 
             # obtain fitness for each individual in current generation
             fitness, tracker = simulate_multi_core(gene_pool, evo_config,
-                                                   track_individuals=(not args.no_tracking),
-                                                   num_cores=args.cores, sim_ids=sim_ids)
+                                                   track_individuals=(not args.no_tracking), num_cores=args.cores)
 
             # sort fitness descending
             sorted_genome_ids = np.argsort(fitness)[::-1]  #from:to:instepsof
