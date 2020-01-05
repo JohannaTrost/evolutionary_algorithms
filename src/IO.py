@@ -3,7 +3,7 @@ from datetime import datetime
 import pickle
 import numpy as np
 from src.evolution import _make_random_gene_pool
-from multiprocessing import cpu_count
+from psutil import cpu_count
 import json
 
 
@@ -12,7 +12,7 @@ def convert_some_args(args):
 
     # use all available CPU cores of -1
     if args.cores == -1:
-        args.cores = cpu_count()
+        args.cores = cpu_count(logical=False)
 
     # check whether generation and duration was parsed - this is necessary to forward updated values to the evolution
     # configuration
@@ -71,10 +71,10 @@ def convert_some_args(args):
         # if desired find last generation
         if args.generation == -1:
             # if no generation file present initialize new evolution
-            try:
+            if any(['gen_' in f for f in os.listdir(parent_dir)]):
                 args.generation = find_latest_gen(parent_dir)
                 args.gene_pool_file = parent_dir + 'gen_' + str(args.generation) + '.pkl'
-            except IndexError:
+            else:
                 args.gene_pool_file = None
                 args.generation = 0
 

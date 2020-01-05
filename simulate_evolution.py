@@ -95,7 +95,6 @@ def main():
 
             # sort fitness descending
             sorted_genome_ids = np.argsort(fitness)[::-1]  #from:to:instepsof
-
             # select best performers and transform into parent pairs
             selected = evo.selection(sorted_genome_ids)
 
@@ -122,8 +121,9 @@ def main():
             gene_pool = evo.crossing(selected, gene_pool, evo_config)
 
             # print status
-            print('generation {} | avg distance {} | duration {}s'.format(generation, avg_dist,
-                                                                          round(time.time() - start)))
+            print('individuals {} | generation {} | avg distance {} | duration {}s'.format(len(gene_pool), generation,
+                                                                                           avg_dist,
+                                                                                           round(time.time() - start)))
 
         # save statistics, fitness and position data and gene pool
         IO.save_stats(stats, filename=parent_dir + 'stats.csv')
@@ -131,7 +131,7 @@ def main():
         if not args.no_tracking:
             IO.save_tracker(tracker_over_gen, filename=parent_dir + 'tracker.pkl')
         IO.save_gene_pool(gene_pool, filename=parent_dir + 'gen_' + str(args.generations +
-                                                                      args.generation - 1) + '.pkl')
+                                                                        args.generation - 1) + '.pkl')
 
         print('done.')
         print('')
