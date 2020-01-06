@@ -5,10 +5,21 @@ import time
 import numpy as np
 from matplotlib import cm
 import multiprocessing as mp
+import os
 unsorted_result = []
 
 
 def remove_simulation(pop, sim_id):
+    """Removes all object from simulation and disconnects from physics server.
+
+    Parameters
+    ----------
+    pop : list
+        List of ind_ids for multiple individuals.
+    sim_id : int
+        Index pointing to the physics server of the respective simulation.
+    """
+
     # remove all bodies and reset simulation
     [p.removeBody(ind, physicsClientId=sim_id) for ind in pop]
     p.resetSimulation(physicsClientId=sim_id)
@@ -16,32 +27,92 @@ def remove_simulation(pop, sim_id):
 
 
 def worker(args):
-    global unsorted_result
-    ind = args[0]
-    p_gene_pool = args[1]
-    e_conf = args[2]
-    track_individuals = args[3]
-    sim_id = _make_sim_env('direct')
-    pop, sim_id, tracker = simulate_pop(p_gene_pool.tolist(), e_conf,
-                                        track_individuals=track_individuals, direct=True, sim_id=sim_id)
-    unsorted_result.append([ind, fitness(pop, sim_id), tracker])
+    """Worker function for parallel processing of simulations.
+
+    Output will be put into static, shared object defined elsewhere.
+
+    Parameters
+    ----------
+    args : list | tuple
+        args[0] is the index of the worker
+        args[1] is the gene pool (part)
+        args[2] is the evolution configuration
+        args[3] is a boolean value indicating whether to track individual's paths
+        args[4] is the shared queue were data is appended (only for windows)
+    """
+    pop, sim_id, tracker = simulate_pop(args[1].tolist(), args[2], track_individuals=args[3], direct=True,
+                                        sim_id=_make_sim_env('direct'))
+    if os.name == 'nt':
+        args[4].put((args[0], fitness(pop, sim_id), tracker))
+    else:
+        unsorted_result.append([args[0], fitness(pop, sim_id), tracker])
     remove_simulation(pop, sim_id)
 
 
 def simulate_multi_core(gene_pool, evo_config, track_individuals=True, num_cores=1):
-    manager = mp.Manager()
+    """Performs direct simulation on multiple CPU cores.
+
+    Note that due to different system architectures this functions works differently on windows and unix-oid systems.
+
+    To use multi core processing, we exploit the fact, that individuals can be simulated independently. Thus the gene
+    pool is split into mostly evenly sized parts and for each part the simulation is run on a separate CPU core.
+
+    Parameters
+    ----------
+    gene_pool : list
+        List of genomes for all individuals.
+    evo_config : dict
+        Configuration file for the current simulation.
+    track_individuals : bool
+        Whether to collect position data for all individuals.
+    num_cores : int
+        Number of CPU cores used for the simulation. If -1, all available cores will be utilized.
+
+    Returns
+    -------
+    fitness_all : list
+        List of fitness values for all individuals after merging results.
+    tracker_all : dict
+        Paths recorded for each individual. Key values represent individual IDs within the simulation.
+    """
+
     global unsorted_result
-    unsorted_result = manager.list()
     # perform simulation using multiprocessing library (on multiple CPU cores) by splitting the amount of individuals
     # into as many chunks as CPU cores were requested
 
     # split gene pool into num_cores chunks and compute in parallel pools
     split_gene_pool = np.array_split(np.array(gene_pool), num_cores)
-    pool = mp.Pool(processes=num_cores)
-    pool.imap_unordered(worker, [[ind, data, evo_config, track_individuals]
-                                 for ind, data in enumerate(split_gene_pool)])
-    pool.close()
-    pool.join()
+
+    # multiprocessing on windows works slightly different than on unix. To ensure compatibility two different ways of
+    # multi processing were implemented.
+    if os.name == 'nt':
+        # make multiprocessing queue
+        q_out = mp.Queue(maxsize=-1)
+
+        # make parallel processes
+        processes = [mp.Process(target=worker, args=([ind, data_in, evo_config, track_individuals, q_out], ))
+                     for ind, data_in in enumerate(split_gene_pool)]
+
+        # start parallel processes
+        for process in processes:
+            process.start()
+
+        unsorted_result = []
+        # get data from queue on the fly to avoid overflow
+        while any([process.is_alive() for process in processes]):
+            while not q_out.empty():
+                unsorted_result.append(q_out.get(block=True, timeout=None))
+
+    # for unix-oid systems
+    else:
+        manager = mp.Manager()
+        unsorted_result = manager.list()
+
+        pool = mp.Pool(processes=num_cores)
+        pool.imap_unordered(worker, [[ind, data, evo_config, track_individuals]
+                                     for ind, data in enumerate(split_gene_pool)])
+        pool.close()
+        pool.join()
 
     # since incoming results are not sorted due to different run times of the processes, sort them
     sorted_fitness = [t[1] for t in sorted(unsorted_result)]
@@ -66,6 +137,33 @@ def simulate_multi_core(gene_pool, evo_config, track_individuals=True, num_cores
 
 
 def simulate_pop(gene_pool, evo_config, args=None, direct=False, track_individuals=True, sim_id=None):
+    """Genomes for multiple individuals are converted into multi bodies and simulated using pybullet.
+
+    Parameters
+    ----------
+    gene_pool : list
+        List of genomes for all individuals.
+    evo_config : dict
+        Configuration file for the current simulation.
+    args : argparse.Namespace
+        Parsed arguments.
+    direct : bool
+        Whether to use direct or GUI based simulation.
+    track_individuals : bool
+        Whether to collect position data for all individuals.
+    sim_id : int
+        Index pointing to the physics server of the respective simulation.
+
+    Returns
+    -------
+    pop : list
+        List of ind_ids for multiple individuals.
+    sim_id : int
+        Index pointing to the physics server of the respective simulation.
+    tracker : dict
+        Paths recorded for each individual. Key values represent individual IDs within the simulation.
+    """
+
     # simulate all individuals of one generation
     if sim_id is None:
         if direct:
@@ -92,7 +190,7 @@ def simulate_pop(gene_pool, evo_config, args=None, direct=False, track_individua
         duration_steps = np.Inf
 
     # actual simulation
-    ind_tracker = {}
+    tracker = {}
     follow_indiv = pop[0]
     while p.isConnected(sim_id) and step < duration_steps:
         p.stepSimulation(physicsClientId=sim_id)
@@ -104,10 +202,10 @@ def simulate_pop(gene_pool, evo_config, args=None, direct=False, track_individua
             # record x and y position every 10th step to avoid memory overflow
             if track_individuals and step % 10 == 0:
                 x, y = _get_pos(indiv, sim_id)
-                if indiv in ind_tracker.keys():
-                    ind_tracker[indiv].append([x, y])
+                if indiv in tracker.keys():
+                    tracker[indiv].append([x, y])
                 else:
-                    ind_tracker[indiv] = [[x, y]]
+                    tracker[indiv] = [[x, y]]
 
         # set camera position to position of first individual in pop
         if args is not None:
@@ -120,10 +218,25 @@ def simulate_pop(gene_pool, evo_config, args=None, direct=False, track_individua
         if not direct:
             time.sleep(1. / evo_config['simulation']['fps'] * slow_factor)
         step += 1
-    return pop, sim_id, ind_tracker
+    return pop, sim_id, tracker
 
 
 def _make_sim_env(gui_or_direct):
+    """Creates simuation environment for a simulation.
+
+    A new physics server is created and default settings like gravity and a world plane are initialized.
+
+    Parameters
+    ----------
+    gui_or_direct : str
+        Indicating whether a direct or GUI based simulation is requested.
+
+    Returns
+    -------
+    sim_id : int
+        Index pointing to the physics server of the respective simulation.
+    """
+
     # make simulation environment
     if gui_or_direct.lower() == 'gui':
         sim_id = p.connect(p.GUI)
@@ -139,6 +252,26 @@ def _make_sim_env(gui_or_direct):
 
 
 def _get_start_height(genome):
+    """Computes the z value in order to initially place the individual at the start of a simulation.
+
+    This is necessary because individuals can vary in box sizes. To avoid glitching due to placement in the world plane
+    the start height must be appropriate. However it cannot be too heigh because the individual would loose time falling
+    down for the first steps of the simulation.
+
+    The function searches for the largest z size of all boxes, adds a little extra and returns the value.
+
+    Parameters
+    ----------
+    genome : list | tuple
+        Genome containing dictionaries for size, move pattern and evolution configuration. The first list entry are
+        genes for box sizes.
+
+    Returns
+    -------
+    height : float
+        Maximum box size + 0.1.
+    """
+
     # get z coordinate for each body part
     height = 0
     for key in genome[0].keys():
@@ -148,6 +281,14 @@ def _get_start_height(genome):
 
 
 def _make_mb_dict():
+    """Creates default multi body dictionary.
+
+    Returns
+    -------
+    mb_dict : dict
+        Dictionary to store all default parameters of the multi body, serving as a template for each individual.
+    """
+
     # setup base dictionary for multi body
     return {'link_masses': [],
             'link_col_shape_ids': [],
@@ -169,12 +310,41 @@ def _make_mb_dict():
 
 
 def _get_random_color(evo_config):
+    """Returns a random color from a given colormap.
+
+    Returns
+    -------
+    color : list
+        Rgba color value.
+    """
     # create colormap to color individuals such that they fit a certain scheme
     c_map = cm.get_cmap(evo_config['simulation']['colormap'], 255)(np.linspace(0, 1, 255))
     return c_map[np.random.random_integers(0, 254, 1)].tolist()[0]
 
 
 def _genome2multi_body_data(sim_id, evo_config, genome=({}, {})):
+    """Converts genome data into pybullet compatible multi body data.
+
+    Parameters
+    ----------
+    sim_id : int
+        Index pointing to the physics server of the respective simulation.
+    evo_config : dict
+        Configuration file for the current simulation.
+    genome : list | tuple
+        Genome containing dictionaries for size, move pattern and evolution configuration. The first list entry are
+        genes for box sizes.
+
+    Returns
+    -------
+    mb : dict
+        Multi body data as dictionary.
+    col_sphere_id_chest : int
+        Index for collision shape for sphere forming the chest of the individual.
+    vis_sphere_id_chest : int
+        Index for visual shape for sphere forming the chest of the individual.
+    """
+
     # create multi body data from genome
     if not bool(genome[0]):
         genome = _make_random_genome(evo_config)
@@ -261,6 +431,27 @@ def _genome2multi_body_data(sim_id, evo_config, genome=({}, {})):
 
 
 def _genome2simulation(sim_id, evo_config, genome=({}, {})):
+    """Converts a given genome to a multi body ID used by pybullet.
+
+    Wrapper function to convert a genome to a multi body used by pybullet. If no genome was provided a new random genome
+    will be created and the multi body ID of that will be returned.
+
+    Parameters
+    ----------
+    sim_id : int
+        Index pointing to the physics server of the respective simulation.
+    evo_config : dict
+        Configuration file for the current simulation.
+    genome : list | tuple
+        Genome containing dictionaries for size, move pattern and evolution configuration. The first list entry are
+        genes for box sizes.
+
+    Returns
+    -------
+    mb_id : int
+        Multi body ID.
+    """
+
     # transform genome to simulatable multi body (or create new random genome and transform)
     if not bool(genome[0]):
         mb_data = _genome2multi_body_data(sim_id, evo_config)
@@ -289,6 +480,18 @@ def _genome2simulation(sim_id, evo_config, genome=({}, {})):
 
 
 def _disable_collision(sim_id, pop):
+    """Removes all inter-object collision for all multi bodies.
+
+    This is to ensure that simultaneously simulated multi bodies do not interfere with each other by collision.
+
+    Parameters
+    ----------
+    sim_id : int
+        Index pointing to the physics server of the respective simulation.
+    pop : list
+        List of ind_ids for multiple individuals.
+    """
+
     # disable collision between each joint in individual i and each joint in individual j
     for idx, individual in enumerate(pop[:-1]):  # from first to second last
         for other_individual in pop[idx + 1:]:  # from next (relative to above) to end
