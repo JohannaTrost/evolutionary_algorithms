@@ -12,5 +12,5 @@
 
 /.idea
 /__pycache__
-/LifProjetEnv
 /src/__pycache__
+/env

@@ -23,26 +23,26 @@ class Creature(object):
 		scriptDir = os.path.dirname(__file__)
 		relFilePath = f"..\\data\\{self.name}.urdf"
 
-		self.editor.writeLoad(os.path.join(scriptDir, relFilePath), self.spawnPos, orientation, useFixedBase)
+		self.editor.write_load(os.path.join(scriptDir, relFilePath), self.spawnPos, orientation, useFixedBase)
 
 	def addLimb(self, parentLimbName: str, childLimbName: str, jointOrigin = UrdfOrigin(), childOrigin = UrdfOrigin(), extent = [1,1,1]):
 		if len(self.editor.links) == 0:
-			self.editor.addLink(Box(childLimbName, childOrigin, extent))
+			self.editor.add_link(Box(childLimbName, childOrigin, extent))
 		else:
 			jointNames = Creature.getJointNames(parentLimbName, childLimbName)
 			sphere = Sphere(f"S_{parentLimbName}/{childLimbName}")
-			previousLink = self.editor.getLink(parentLimbName)
+			previousLink = self.editor.get_link(parentLimbName)
 			newLink = Box(childLimbName, childOrigin, extent)
 
-			self.editor.addLink(sphere)
-			self.editor.addLink(newLink)
+			self.editor.add_link(sphere)
+			self.editor.add_link(newLink)
 
-			self.editor.addJoint(UrdfJointRevolute(
+			self.editor.add_joint(UrdfJointRevolute(
 				parentLimbName, 
 				sphere.name, 
 				jointNames[0], 
 				jointOrigin, [0,0,1]))
-			self.editor.addJoint(UrdfJointRevolute(
+			self.editor.add_joint(UrdfJointRevolute(
 				sphere.name,
 				childLimbName, 
 				jointNames[1], 
@@ -52,8 +52,8 @@ class Creature(object):
 	def getAngleBetween(self, parentLimbName: str , childLimbName: str):
 		jointsNames = Creature.getJointNames(parentLimbName, childLimbName)
 		return [
-			self.editor.getJointPosition(jointsNames[0]), 
-			self.editor.getJointPosition(jointsNames[1])]
+			self.editor.get_joint_position(jointsNames[0]),
+			self.editor.get_joint_position(jointsNames[1])]
 
 	def distFromStart(self):
 		return np.linalg.norm((np.subtract(self.editor.getPosition(), self.spawnPos)))
