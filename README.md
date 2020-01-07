@@ -48,7 +48,7 @@ optional arguments:
                         are shown
   ```
 
-Note that there are two different modes in which the script can be use: simulation and visualization mode. Within the simulation mode the evolution is simulated according to the specifications. The visualization mode can be used to readout the result of the evolution.
+Note that there are two different modes in which the script can be used: simulation and visualization mode. Within the simulation mode the evolution is simulated according to the specifications. The visualization mode can be used to readout the result of the evolution.
 
 ## Arguments explained
 
